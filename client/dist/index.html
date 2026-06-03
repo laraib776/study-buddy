@@ -88,6 +88,17 @@ body.theme-dark{
   --btn-grad:linear-gradient(135deg,#c898f8,#88c8f8);
   --girl-main:#5d3c78;--girl-accent:#c898f8;--girl-border:#e8d8f8;--girl-headset:#88c8f8;--girl-bow:#f898c8;--girl-blush:#f898c8;--girl-mouth:#f8c878;
 }
+html,body,#app-shell,.main-content,.screen-wrap{
+  overflow:hidden !important;
+  overflow-x:hidden !important;
+  overflow-y:hidden !important;
+}
+html::-webkit-scrollbar,body::-webkit-scrollbar,#app-shell::-webkit-scrollbar,.main-content::-webkit-scrollbar,.screen-wrap::-webkit-scrollbar{
+  display:none !important;
+  width:0 !important;
+  height:0 !important;
+}
+html{background:#E9CED8;}
 body{
   font-family:'Courier New','Nunito',monospace;color:var(--tx);min-height:100vh;
   background:
@@ -95,7 +106,6 @@ body{
     linear-gradient(90deg,rgba(255,255,255,.22) 1px,transparent 1px),
     var(--grad);
   background-size:36px 36px,36px 36px,100% 100%,100% 100%;
-  overflow:hidden;
 }
 body.theme-blue{
   background:
@@ -200,7 +210,7 @@ body.theme-blue .topbar{background:#F8FCFF;}
 .study-timer-floating{position:fixed;top:28px;right:34px;z-index:130;display:flex;align-items:center;gap:8px;padding:8px 12px;background:rgba(255,249,242,.94);border:2px solid #6D5364;box-shadow:4px 4px 0 rgba(109,83,100,.18);font-family:'Courier New',monospace;font-weight:900;color:#4B3A46;letter-spacing:0;cursor:pointer;transition:transform .16s ease,box-shadow .16s ease;}
 .study-timer-floating:hover{transform:translate(1px,1px);box-shadow:3px 3px 0 rgba(109,83,100,.18);}
 .study-timer-time{font-size:14px;min-width:72px;text-align:right;}
-.study-start-floating{position:fixed;top:28px;right:34px;z-index:130;display:flex;align-items:center;gap:9px;min-width:142px;padding:9px 11px;background:var(--lav-lt);color:var(--lav3);border:1.5px solid var(--lav);border-radius:13px;box-shadow:0 5px 16px rgba(200,184,218,.3);font-family:'Nunito','Courier New',sans-serif;font-size:11px;font-weight:900;text-align:left;transition:transform .16s ease,box-shadow .16s ease;}
+.study-start-floating{position:fixed;top:28px;right:26px;z-index:130;display:flex;align-items:center;gap:7px;min-width:124px;padding:8px 9px;background:var(--lav-lt);color:var(--lav3);border:1.5px solid var(--lav);border-radius:13px;box-shadow:0 5px 16px rgba(200,184,218,.3);font-family:'Nunito','Courier New',sans-serif;font-size:11px;font-weight:900;text-align:left;transition:transform .16s ease,box-shadow .16s ease;}
 .study-start-floating img{width:32px;height:32px;background:#fff;padding:2px;box-shadow:3px 3px 0 rgba(85,55,73,.12);image-rendering:pixelated;flex:0 0 auto;}
 .study-start-floating span{display:block;}
 .study-start-floating .start-title{font-size:12px;color:var(--lav3);line-height:1.05;}
@@ -227,9 +237,12 @@ body.theme-blue .topbar{background:#F8FCFF;}
 @keyframes shimmer{0%{background-position:200% 0}100%{background-position:-200% 0}}
 .fade-up{animation:none;}
 .fade-up{height:100%;overflow:auto;padding-bottom:120px;}
-.fade-up,.doc-list{scrollbar-width:auto;}
-.fade-up::-webkit-scrollbar,.doc-list::-webkit-scrollbar{display:block;width:8px;height:8px;}
-.fade-up::-webkit-scrollbar-thumb,.doc-list::-webkit-scrollbar-thumb{background:var(--bd);border-radius:8px;}
+.fade-up.no-scroll{overflow:hidden;}
+.home-screen{scrollbar-width:none;}
+.home-screen::-webkit-scrollbar{display:none;width:0;height:0;}
+.fade-up,.doc-list{scrollbar-width:none;}
+.fade-up::-webkit-scrollbar,.doc-list::-webkit-scrollbar{display:none;width:0;height:0;}
+.fade-up::-webkit-scrollbar-thumb,.doc-list::-webkit-scrollbar-thumb{background:transparent;}
 .fade-up::-webkit-scrollbar-track,.doc-list::-webkit-scrollbar-track{background:transparent;}
 .doc-list{padding-right:12px!important;margin-right:-10px;scrollbar-gutter:stable;}
 .scroll-hint{display:inline-flex;align-items:center;gap:6px;background:var(--card);border:2px solid var(--bd);border-radius:999px;padding:6px 10px;font-size:10px;font-weight:900;color:var(--mu);box-shadow:3px 3px 0 rgba(109,83,100,.12);}
@@ -1846,7 +1859,7 @@ function App(){
     const weekPractice=last7.reduce((a,b)=>a+b.practice,0);
     const pctStudy=Math.min(100,(todayData.studyMin/60)*100);
 
-    return E('div',{className:'fade-up'},
+    return E('div',{className:'fade-up home-screen'},
       // Page header (desktop)
       E('div',{className:'page-header'},
         E('h1',{},'Good '+(new Date().getHours()<12?'Morning':new Date().getHours()<18?'Afternoon':'Evening')),
@@ -2328,7 +2341,7 @@ function App(){
 
   // ─── FOCUS ───
   const FocusScreen=()=>{
-    return E('div',{className:'fade-up'},
+    return E('div',{className:'fade-up no-scroll'},
       E('div',{className:'page-header'},E('h1',{},'Focus Timer'),E('p',{},'Deep work mode')),
       E('div',{className:'card',style:{textAlign:'center',marginBottom:12,padding:'18px'}},
         Img({src:assets.headphones,alt:'focus',style:{width:82,height:82,margin:'0 auto 8px',imageRendering:'pixelated'}}),
@@ -2886,7 +2899,6 @@ function App(){
         )
       ),
       focusOn&&E('button',{type:'button',className:'study-timer-floating',onClick:()=>setScreen('focus')},
-        E('span',{className:'study-timer-label'},'Study'),
         E('span',{className:'study-timer-time'},fmtClock(focusSec))
       ),
       E('div',{className:'screen-wrap',onWheel:()=>{
