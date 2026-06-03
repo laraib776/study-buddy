@@ -67,3 +67,27 @@ http://localhost:8788/studybuddy_v3.html
 For real public deployment without exposing your Gemini key, you will need some backend with environment secrets.
 
 Firebase Functions is the clean Firebase way, but it needs Blaze billing. Until then, local backend is the safest no-money option.
+
+
+Upload RACE Dataset
+Please upload the downloaded and extracted RACE dataset files (specifically the train and dev folders containing the data) into a directory named race_local in your Colab environment. You can do this by clicking the folder icon on the left sidebar, navigating to your desired location (e.g., the root /content/), and then using the upload button.
+
+Once uploaded, your file structure  of teh dataset should look something like:
+
+/content/
+├── race_local/
+│   ├── train/
+│   │   ├── high/
+│   │   │   ├── <doc_id>.txt
+│   │   │   └── <doc_id>.txt.json
+│   │   └── middle/
+│   │       ├── <doc_id>.txt
+│   │       └── <doc_id>.txt.json
+│   └── dev/
+│       ├── high/
+│       │   ├── <doc_id>.txt
+│       │   └── <doc_id>.txt.json
+│       └── middle/
+│           ├── <doc_id>.txt
+│           └── <doc_id>.txt.json
+After uploading, the convert_race function will be modified to load from this local path.
