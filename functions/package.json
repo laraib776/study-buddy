@@ -1,0 +1,20 @@
+{
+  "name": "studybuddy-functions",
+  "description": "Firebase Functions + Genkit backend for StudyBuddy AI",
+  "private": true,
+  "main": "src/index.js",
+  "engines": {
+    "node": "20"
+  },
+  "scripts": {
+    "serve": "firebase emulators:start --only functions",
+    "deploy": "firebase deploy --only functions",
+    "lint": "node --check index.js"
+  },
+  "dependencies": {
+    "@genkit-ai/google-genai": "^1.33.0",
+    "firebase-admin": "^13.0.0",
+    "firebase-functions": "^6.0.0",
+    "genkit": "^1.0.0"
+  }
+}

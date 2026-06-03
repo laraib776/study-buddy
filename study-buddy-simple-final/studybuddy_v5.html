@@ -1,0 +1,1537 @@
+<!DOCTYPE html>
+<html lang="en" data-theme="pink">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1.0,maximum-scale=1.0,user-scalable=no">
+<title>StudyBuddy AI ✿</title>
+<!--
+  ╔══════════════════════════════════════════════════════════════╗
+  ║  STUDYBUDDY AI v5  —  Firebase + Firestore + Full Redesign  ║
+  ╠══════════════════════════════════════════════════════════════╣
+  ║  DATABASE SCHEMA (Firestore — SQL-equivalent documented)     ║
+  ║  ─────────────────────────────────────────────────────────   ║
+  ║  Collection: users/{uid}                                      ║
+  ║    profile: { name, email, createdAt, theme, iconSet }        ║
+  ║    settings: { theme, icons:{}, decorations:[], apiKey }      ║
+  ║                                                               ║
+  ║  Sub-collection: users/{uid}/progress/{YYYY-MM-DD}           ║
+  ║    { studyMin, cards, quizScores[], topics[], completed }      ║
+  ║                                                               ║
+  ║  Sub-collection: users/{uid}/calendar/{YYYY-MM-DD}           ║
+  ║    { note, completed, deleted, updatedAt }                    ║
+  ║                                                               ║
+  ║  Sub-collection: users/{uid}/studySessions/{id}              ║
+  ║    { notes, topic, cards[], quiz{}, createdAt }               ║
+  ║                                                               ║
+  ║  FIRESTORE SECURITY RULES (paste in Firebase Console):       ║
+  ║  rules_version = '2';                                         ║
+  ║  service cloud.firestore {                                    ║
+  ║    match /databases/{database}/documents {                    ║
+  ║      match /users/{userId}/{document=**} {                    ║
+  ║        allow read, write: if                                  ║
+  ║          request.auth != null &&                              ║
+  ║          request.auth.uid == userId;                          ║
+  ║      }                                                        ║
+  ║    }                                                          ║
+  ║  }                                                            ║
+  ╚══════════════════════════════════════════════════════════════╝
+-->
+<link href="https://fonts.googleapis.com/css2?family=Press+Start+2P&family=Nunito:wght@300;400;500;600;700;800;900&display=swap" rel="stylesheet">
+<!-- Core libs -->
+<script src="https://unpkg.com/react@18/umd/react.production.min.js" crossorigin></script>
+<script src="https://unpkg.com/react-dom@18/umd/react-dom.production.min.js" crossorigin></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/mammoth@1.6.0/mammoth.browser.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jszip/3.10.1/jszip.min.js"></script>
+<!-- Firebase v10 compat (API keys intentionally public — security via Firestore Rules) -->
+<script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-auth-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore-compat.js"></script>
+<style>
+/* ═══ PIXEL CURSOR ═══ */
+*{cursor:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='20' height='22'%3E%3Crect x='3' y='0' width='3' height='17' fill='%23f875aa'/%3E%3Crect x='6' y='3' width='3' height='3' fill='%23f875aa'/%3E%3Crect x='9' y='6' width='3' height='3' fill='%23f875aa'/%3E%3Crect x='6' y='9' width='6' height='3' fill='%23f875aa'/%3E%3Crect x='9' y='12' width='6' height='3' fill='%23f875aa'/%3E%3Crect x='3' y='1' width='1' height='15' fill='%23fff5f9'/%3E%3C/svg%3E") 3 0,default}
+button,a,[role=button],.snav-item,.cal-cell,.q-opt,.flip-scene,.bnav-item,.upload-zone,.tab-btn,.theme-card,.deco-chip{cursor:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='20' height='22'%3E%3Crect x='3' y='0' width='3' height='17' fill='%23f875aa'/%3E%3Crect x='6' y='3' width='3' height='3' fill='%23f875aa'/%3E%3Crect x='9' y='6' width='3' height='3' fill='%23f875aa'/%3E%3Crect x='6' y='9' width='6' height='3' fill='%23f875aa'/%3E%3Crect x='9' y='12' width='6' height='3' fill='%23f875aa'/%3E%3Crect x='3' y='1' width='1' height='15' fill='%23fff5f9'/%3E%3C/svg%3E") 3 0,pointer}
+input,textarea,select{cursor:text}
+
+/* ═══ THEME VARIABLES ═══ */
+:root,[data-theme="pink"]{
+  --pk:#f8bfd7;--pk2:#e876a8;--pk3:#b01868;--pk-lt:#fff5f9;--pk-md:#fcd8ea;
+  --lav:#ecdeff;--lav2:#9878d8;--lav3:#5828b0;--lav-lt:#f8f3ff;
+  --mint:#d0f4e4;--mint2:#38b880;--mint3:#106840;--mint-lt:#f0fbf5;
+  --rose:#ffe0ee;--rose2:#e83880;--rose3:#901848;--rose-lt:#fff5f9;
+  --peach:#fff0d8;--peach2:#e89038;--peach3:#a85010;--peach-lt:#fffaf0;
+  --sky:#d8e7ff;--sky2:#4880e0;--sky3:#1848c0;--sky-lt:#edf4ff;
+  --bg:#fce8f0;--card:#fffafc;--bd:#f0c8da;--tx:#4a2a3a;--mu:#a87898;
+  --sidebar-bg:#fffafc;--sidebar-border:#e876a8;
+  --grad:linear-gradient(135deg,#fce8f0,#f5eaff,#e5f0ff);
+  --btn-grad:linear-gradient(135deg,#e876a8,#9878d8);
+  --pfont:'Press Start 2P',monospace;--bfont:'Nunito',sans-serif;
+  --sh-sm:0 2px 8px rgba(232,118,168,.15);--sh-md:0 4px 20px rgba(232,118,168,.2);--sh-lg:0 8px 32px rgba(232,118,168,.25);
+  --r:16px;--rs:10px;--rl:24px;
+}
+[data-theme="blue"]{
+  --pk:#b8d8ff;--pk2:#3870d8;--pk3:#1040a8;--pk-lt:#eef4ff;--pk-md:#c0d8ff;
+  --lav:#d0e8ff;--lav2:#3870d8;--lav3:#1040a8;--lav-lt:#edf4ff;
+  --mint:#d0f4e4;--mint2:#38b880;--mint3:#106840;--mint-lt:#f0fbf5;
+  --rose:#ffe0ee;--rose2:#e83880;--rose3:#901848;--rose-lt:#fff5f9;
+  --peach:#fff0d8;--peach2:#e89038;--peach3:#a85010;--peach-lt:#fffaf0;
+  --sky:#d8e7ff;--sky2:#4880e0;--sky3:#1848c0;--sky-lt:#edf4ff;
+  --bg:#e0ecff;--card:#f5f9ff;--bd:#b8d0f0;--tx:#1a2848;--mu:#4870a8;
+  --sidebar-bg:#f5f9ff;--sidebar-border:#3870d8;
+  --grad:linear-gradient(135deg,#e0ecff,#d8f0ff,#e0e8ff);
+  --btn-grad:linear-gradient(135deg,#3870d8,#38b8d0);
+  --sh-sm:0 2px 8px rgba(56,112,216,.15);--sh-md:0 4px 20px rgba(56,112,216,.2);--sh-lg:0 8px 32px rgba(56,112,216,.25);
+}
+[data-theme="purple"]{
+  --pk:#e8d8ff;--pk2:#7858d8;--pk3:#5028a8;--pk-lt:#f5f0ff;--pk-md:#e0d0f8;
+  --lav:#f0e8ff;--lav2:#7858d8;--lav3:#5028a8;--lav-lt:#faf5ff;
+  --mint:#d0f4e4;--mint2:#38b880;--mint3:#106840;--mint-lt:#f0fbf5;
+  --rose:#ffe0ee;--rose2:#e83880;--rose3:#901848;--rose-lt:#fff5f9;
+  --peach:#fff0d8;--peach2:#e89038;--peach3:#a85010;--peach-lt:#fffaf0;
+  --sky:#d8e7ff;--sky2:#4880e0;--sky3:#1848c0;--sky-lt:#edf4ff;
+  --bg:#f0e8ff;--card:#faf5ff;--bd:#d0b8f0;--tx:#2a1848;--mu:#7858a8;
+  --sidebar-bg:#faf5ff;--sidebar-border:#7858d8;
+  --grad:linear-gradient(135deg,#f0e8ff,#fce8ff,#e8e0ff);
+  --btn-grad:linear-gradient(135deg,#7858d8,#d858a8);
+  --sh-sm:0 2px 8px rgba(120,88,216,.15);--sh-md:0 4px 20px rgba(120,88,216,.2);--sh-lg:0 8px 32px rgba(120,88,216,.25);
+}
+[data-theme="dark"]{
+  --pk:#3a2050;--pk2:#c898f8;--pk3:#f0c8ff;--pk-lt:#200a30;--pk-md:#2a1040;
+  --lav:#200a30;--lav2:#c898f8;--lav3:#f0c8ff;--lav-lt:#180820;
+  --mint:#082818;--mint2:#88f8c8;--mint3:#c0fff0;--mint-lt:#082818;
+  --rose:#280810;--rose2:#f89898;--rose3:#ffc0c0;--rose-lt:#280810;
+  --peach:#281808;--peach2:#f8c878;--peach3:#ffecc0;--peach-lt:#281808;
+  --sky:#081828;--sky2:#88c8f8;--sky3:#c0e8ff;--sky-lt:#081828;
+  --bg:#0f0818;--card:#1a1028;--bd:#2a1840;--tx:#e8d8f8;--mu:#9888b8;
+  --sidebar-bg:#140c20;--sidebar-border:#c898f8;
+  --grad:linear-gradient(135deg,#0f0818,#18082a,#080a1a);
+  --btn-grad:linear-gradient(135deg,#c898f8,#88c8f8);
+  --sh-sm:0 2px 8px rgba(200,152,248,.15);--sh-md:0 4px 20px rgba(200,152,248,.2);--sh-lg:0 8px 32px rgba(200,152,248,.25);
+}
+
+/* ═══ BASE ═══ */
+*{box-sizing:border-box;margin:0;padding:0;-webkit-tap-highlight-color:transparent}
+html{background:var(--bg)}
+body{font-family:var(--bfont);color:var(--tx);min-height:100vh;overflow:hidden;background:var(--grad)}
+*{scrollbar-width:thin;scrollbar-color:var(--pk2) transparent}
+::-webkit-scrollbar{width:3px}::-webkit-scrollbar-thumb{background:var(--pk2);border-radius:2px}
+
+/* ═══ LAYOUT ═══ */
+#app-shell{display:flex;height:100vh;max-width:1280px;margin:0 auto;padding:12px 14px;position:relative}
+
+/* ═══ SIDEBAR ═══ */
+.sidebar{width:210px;background:var(--sidebar-bg);border:3px solid var(--sidebar-border);border-radius:var(--r) 0 0 var(--r);display:flex;flex-direction:column;position:sticky;top:12px;height:calc(100vh - 24px);z-index:50;overflow:hidden;box-shadow:var(--sh-lg)}
+.s-titlebar{height:28px;background:var(--btn-grad);display:flex;align-items:center;padding:0 10px;gap:5px;flex-shrink:0}
+.s-dot{width:9px;height:9px;border-radius:50%}
+.s-dot:nth-child(1){background:#ff6b6b}.s-dot:nth-child(2){background:#ffd166}.s-dot:nth-child(3){background:#6dd97e}
+.s-ttl{font-family:var(--pfont);font-size:7px;color:rgba(255,255,255,.85);margin-left:5px;letter-spacing:.8px}
+.sidebar-brand{padding:10px 12px;border-bottom:2px solid var(--pk-md);background:var(--pk-lt)}
+.sidebar-brand h1{font-family:var(--pfont);font-size:9px;color:var(--pk3);line-height:1.5;letter-spacing:.3px}
+.sidebar-brand p{font-size:9px;color:var(--mu);margin-top:4px;font-weight:700}
+.sidebar-brand .user-badge{display:flex;align-items:center;gap:6px;margin-top:6px;padding:5px 8px;background:var(--card);border-radius:8px;border:1px solid var(--bd)}
+.user-badge-name{font-size:10px;font-weight:700;color:var(--pk3);flex:1;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.sidebar-nav{padding:10px 8px;flex:1;overflow-y:auto}
+.snav-item{display:flex;align-items:center;gap:9px;padding:8px 10px;border-radius:var(--rs);font-size:8px;font-family:var(--pfont);color:var(--mu);transition:all .2s;margin-bottom:3px;border:2px solid transparent;background:none;width:100%;text-align:left;letter-spacing:.2px}
+.snav-item:hover{background:var(--pk-lt);color:var(--pk3);border-color:var(--pk-md);transform:translateX(2px)}
+.snav-item.active{background:var(--pk-lt);color:var(--pk3);border-color:var(--pk2);box-shadow:var(--sh-sm)}
+.snav-icon{width:32px;height:32px;display:flex;align-items:center;justify-content:center;background:var(--card);border-radius:7px;border:1px solid var(--bd);flex-shrink:0;font-size:16px}
+.sidebar-footer{padding:8px;border-top:2px solid var(--pk-md)}
+
+/* ═══ MAIN CONTENT ═══ */
+.main-content{flex:1;height:calc(100vh - 24px);background:rgba(255,250,252,.95);border:3px solid var(--pk2);border-left:0;border-radius:0 var(--r) var(--r) 0;box-shadow:var(--sh-lg);overflow:hidden;position:relative}
+.screen-wrap{max-width:960px;padding:0;margin:0 auto;height:100%;overflow:hidden}
+@media(min-width:769px){.screen-wrap{padding:12px 20px 96px}}
+@media(min-width:769px) and (max-height:820px){.screen-wrap{zoom:.88}}
+@media(min-width:769px) and (max-height:700px){.screen-wrap{zoom:.78}}
+@media(min-width:960px){.quick-grid{grid-template-columns:repeat(4,1fr)!important}}
+
+/* ═══ MOBILE ═══ */
+.bottom-nav{display:none;position:fixed;bottom:0;left:0;right:0;background:rgba(255,250,252,.97);backdrop-filter:blur(20px);border-top:2px solid var(--pk-md);padding:6px 8px 16px;z-index:100}
+.bnav-grid{display:flex;justify-content:space-around}
+.bnav-item{display:flex;flex-direction:column;align-items:center;gap:2px;padding:4px 6px;border:none;background:none;min-width:46px}
+.bnav-icon{width:40px;height:36px;border-radius:9px;display:flex;align-items:center;justify-content:center;font-size:18px;transition:all .18s}
+.bnav-item.active .bnav-icon{background:var(--pk-lt)}
+.bnav-label{font-size:8px;font-weight:700;color:var(--mu)}
+.bnav-item.active .bnav-label{color:var(--pk3)}
+.topbar{display:none;align-items:center;gap:10px;padding:10px 14px;background:var(--pk-lt);border-bottom:2px solid var(--pk-md);position:sticky;top:0;z-index:40}
+.topbar h2{font-family:var(--pfont);font-size:9px;color:var(--pk3);flex:1;letter-spacing:.5px}
+.back-btn{background:var(--pk-lt);border:2px solid var(--pk2);width:32px;height:32px;border-radius:8px;display:flex;align-items:center;justify-content:center;font-size:16px;color:var(--pk3)}
+@media(max-width:768px){
+  .sidebar{display:none}.main-content{border:0;border-radius:0;height:100vh;box-shadow:none}
+  .bottom-nav{display:block}.screen-wrap{padding-bottom:76px}
+  .topbar{display:flex!important}.desk-title,.desk-sub{display:none}
+  body{overflow:hidden}#app-shell{padding:0;display:block}
+}
+
+/* ═══ PAGE HEADER ═══ */
+.page-header{background:var(--pk-lt);border-radius:var(--r);padding:12px 16px;margin-bottom:10px;border:2px solid var(--pk-md);box-shadow:var(--sh-sm);position:relative;overflow:hidden}
+.page-header::after{content:'✦ ✦ ✦';position:absolute;right:14px;top:50%;transform:translateY(-50%);font-size:11px;color:var(--pk2);opacity:.4;letter-spacing:4px}
+.page-header h1{font-family:var(--pfont);font-size:10px;color:var(--pk3);margin-bottom:3px;letter-spacing:.4px}
+.page-header p{font-size:11px;color:var(--mu);font-weight:600}
+
+/* ═══ CARDS ═══ */
+.card{background:var(--card);border-radius:var(--r);border:2px solid var(--bd);padding:12px;box-shadow:var(--sh-sm);position:relative}
+.card::before{content:'';position:absolute;top:0;left:0;right:0;height:2px;background:var(--btn-grad);opacity:.6;border-radius:2px 2px 0 0}
+.card-sm{background:var(--card);border-radius:var(--rs);border:2px solid var(--bd);padding:10px;box-shadow:var(--sh-sm)}
+.pw-bar{background:var(--btn-grad);padding:7px 10px;display:flex;align-items:center;gap:5px}
+.pw-bar.rounded-top{border-radius:var(--r) var(--r) 0 0}
+.pw-dot{width:8px;height:8px;border-radius:50%;display:inline-block}
+.pw-dot:nth-child(1){background:#ff6b6b}.pw-dot:nth-child(2){background:#ffd166}.pw-dot:nth-child(3){background:#6dd97e}
+.pw-ttl{font-family:var(--pfont);font-size:7px;color:rgba(255,255,255,.85);margin-left:5px;letter-spacing:.8px}
+
+/* ═══ BUTTONS ═══ */
+.btn{border:2px solid transparent;border-radius:var(--rs);padding:9px 16px;font-family:var(--pfont);font-size:8px;transition:all .2s;display:inline-flex;align-items:center;gap:6px;letter-spacing:.4px;position:relative;overflow:hidden}
+.btn:hover{transform:translateY(-1px);box-shadow:var(--sh-md)}.btn:active{transform:translateY(0)}
+.btn-primary{background:var(--btn-grad);color:white}
+.btn-mint{background:linear-gradient(135deg,var(--mint2),#2898a0);color:white}
+.btn-rose{background:linear-gradient(135deg,var(--rose2),#b01860);color:white}
+.btn-peach{background:linear-gradient(135deg,var(--peach2),#c06820);color:white}
+.btn-danger{background:linear-gradient(135deg,#e83838,#b01010);color:white}
+.btn-outline{background:var(--card);color:var(--tx);border-color:var(--bd)}
+.btn-outline:hover{border-color:var(--pk2);background:var(--pk-lt)}
+.btn-ghost{background:none;border:none;color:var(--mu);padding:4px 8px}
+.btn-ghost:hover{color:var(--pk3);background:var(--pk-lt);border-radius:6px}
+.btn-sm{padding:6px 12px;font-size:8px}
+.btn-block{width:100%;justify-content:center}
+
+/* ═══ CHIPS ═══ */
+.chip{display:inline-flex;align-items:center;gap:4px;border-radius:50px;padding:3px 10px;font-size:10px;font-weight:700}
+.chip-lav{background:var(--lav-lt);color:var(--lav3)}.chip-mint{background:var(--mint-lt);color:var(--mint3)}
+.chip-rose{background:var(--rose-lt);color:var(--rose3)}.chip-peach{background:var(--peach-lt);color:var(--peach3)}
+.chip-sky{background:var(--sky-lt);color:var(--sky3)}
+
+/* ═══ FORM ═══ */
+input[type=text],input[type=password],input[type=email],input[type=url],textarea,select{font-family:var(--bfont);font-size:13px;color:var(--tx);border:2px solid var(--bd);border-radius:var(--rs);padding:10px 12px;outline:none;background:var(--card);width:100%;transition:border-color .2s,box-shadow .2s}
+input:focus,textarea:focus{border-color:var(--pk2);box-shadow:0 0 0 3px rgba(232,118,168,.12)}
+textarea{resize:vertical}
+input[type=file]{display:none}
+input[type=checkbox]{width:15px;height:15px;accent-color:var(--pk2)}
+
+/* ═══ PROGRESS BAR ═══ */
+.pbar-wrap{background:var(--bd);border-radius:50px;height:7px;overflow:hidden}
+.pbar{height:100%;border-radius:50px;transition:width .6s ease;background:var(--btn-grad)}
+
+/* ═══ STAT CARD ═══ */
+.stat-card{background:var(--card);border:2px solid var(--bd);border-radius:var(--r);padding:10px;display:flex;flex-direction:column;gap:4px;box-shadow:var(--sh-sm);transition:transform .2s}
+.stat-card:hover{transform:translateY(-1px)}
+.stat-val{font-family:var(--pfont);font-size:15px;color:var(--tx)}
+.stat-lbl{font-size:8px;color:var(--mu);font-family:var(--pfont);text-transform:uppercase;letter-spacing:.4px}
+.line-icon{width:38px;height:38px;border-radius:9px;background:var(--pk-lt);display:inline-flex;align-items:center;justify-content:center;flex-shrink:0;border:1px solid var(--pk-md);font-size:18px}
+
+/* ═══ QUIZ OPTIONS ═══ */
+.q-opt{width:100%;text-align:left;padding:10px 13px;margin-bottom:6px;border:2px solid var(--bd);border-radius:var(--rs);font-family:var(--bfont);font-size:13px;font-weight:600;color:var(--tx);background:var(--card);transition:all .15s}
+.q-opt:hover{border-color:var(--pk2);background:var(--pk-lt)}
+.q-opt.sel{border-color:var(--lav2);background:var(--lav-lt);color:var(--lav3)}
+.q-opt.cor{border-color:var(--mint2);background:var(--mint-lt);color:var(--mint3)}
+.q-opt.wrg{border-color:var(--rose2);background:var(--rose-lt);color:var(--rose3)}
+
+/* ═══ CALENDAR ═══ */
+.cal-grid{display:grid;grid-template-columns:repeat(7,1fr);gap:3px}
+.cal-cell{display:flex;flex-direction:column;align-items:center;justify-content:center;border-radius:7px;transition:all .15s;border:2px solid var(--bd);background:var(--card);position:relative;min-height:0}
+.cal-cell:hover{background:var(--pk-lt);border-color:var(--pk2)}
+.cal-cell.today{border-color:var(--lav2);background:var(--lav-lt)}
+.cal-cell.selected{background:var(--pk2);border-color:var(--pk3)}
+.cal-cell.selected .cal-num{color:white;font-weight:800}
+.cal-num{font-size:11px;font-weight:700;color:var(--tx);line-height:1}
+.cal-dot{width:4px;height:4px;border-radius:50%;margin-top:1px}
+.cal-pin{position:absolute;right:3px;top:2px;width:6px;height:6px;background:var(--rose2);border-radius:50%}
+
+/* ═══ FLIP CARD ═══ */
+.flip-scene{perspective:900px;cursor:pointer;margin-bottom:14px}
+.flip-card{position:relative;width:100%;height:190px;transform-style:preserve-3d;transition:transform .5s cubic-bezier(.4,0,.2,1)}
+.flip-card.flipped{transform:rotateY(180deg)}
+.flip-face{position:absolute;inset:0;backface-visibility:hidden;border-radius:var(--r);display:flex;flex-direction:column;align-items:center;justify-content:center;padding:20px;text-align:center}
+.flip-front{background:var(--card);border:2px solid var(--bd)}
+.flip-back{background:var(--pk-lt);border:2px solid var(--pk2);transform:rotateY(180deg)}
+
+/* ═══ CHAT ═══ */
+.chat-ex{background:var(--card);border:2px solid var(--bd);border-radius:16px 16px 16px 4px;padding:10px 14px;max-width:84%;align-self:flex-start}
+.chat-st{background:var(--pk-lt);border:2px solid var(--pk-md);border-radius:16px 16px 4px 16px;padding:10px 14px;max-width:84%;align-self:flex-end}
+.chat-role{font-size:8px;font-weight:800;text-transform:uppercase;letter-spacing:.8px;margin-bottom:3px;font-family:var(--pfont)}
+.chat-text{font-size:12px;color:var(--tx);line-height:1.5}
+
+/* ═══ UPLOAD ZONE ═══ */
+.upload-zone{border:3px dashed var(--pk-md);border-radius:var(--r);padding:18px;text-align:center;transition:all .2s;background:var(--pk-lt)}
+.upload-zone:hover{border-color:var(--pk2);background:var(--card)}
+
+/* ═══ EMPTY STATE ═══ */
+.empty-state{display:flex;flex-direction:column;align-items:center;text-align:center;padding:24px 0}
+
+/* ═══ SETTINGS TABS ═══ */
+.settings-tabs{display:flex;gap:0;background:var(--pk-lt);border-radius:50px;padding:3px;border:2px solid var(--pk-md);margin-bottom:14px;flex-wrap:wrap}
+.tab-btn{flex:1;padding:7px 4px;border-radius:50px;border:none;font-family:var(--pfont);font-size:7px;background:none;color:var(--mu);transition:all .2s;letter-spacing:.2px;white-space:nowrap}
+.tab-btn.active{background:var(--pk2);color:white;box-shadow:var(--sh-sm)}
+
+/* ═══ THEME CARDS ═══ */
+.theme-grid{display:grid;grid-template-columns:repeat(2,1fr);gap:10px;margin-bottom:14px}
+.theme-card{border-radius:var(--r);padding:14px;border:2px solid var(--bd);cursor:pointer;transition:all .2s;position:relative}
+.theme-card.active{border-color:var(--pk2);box-shadow:var(--sh-md)}
+.theme-card.active::after{content:'✓';position:absolute;top:8px;right:10px;font-size:14px;color:var(--pk2);font-weight:900}
+.theme-swatch{display:flex;gap:5px;margin-bottom:8px}
+.swatch{width:20px;height:20px;border-radius:50%;border:2px solid rgba(0,0,0,.1)}
+
+/* ═══ ICON EDITOR ═══ */
+.icon-grid{display:grid;grid-template-columns:repeat(2,1fr);gap:10px}
+.icon-item{display:flex;align-items:center;gap:10px;padding:10px;background:var(--card);border:2px solid var(--bd);border-radius:var(--rs)}
+.icon-preview{width:36px;height:36px;background:var(--pk-lt);border-radius:8px;display:flex;align-items:center;justify-content:center;font-size:18px;border:1px solid var(--pk-md)}
+.icon-input{flex:1;border:2px solid var(--bd)!important;border-radius:6px!important;padding:6px 8px!important;font-size:20px!important;text-align:center;max-width:60px}
+
+/* ═══ DECORATION PALETTE ═══ */
+.deco-palette{display:flex;flex-wrap:wrap;gap:8px;padding:12px;background:var(--pk-lt);border-radius:var(--r);border:2px solid var(--pk-md);margin-bottom:10px}
+.deco-chip{width:36px;height:36px;background:var(--card);border-radius:8px;border:2px solid var(--bd);display:flex;align-items:center;justify-content:center;font-size:18px;transition:all .15s;user-select:none}
+.deco-chip:hover{border-color:var(--pk2);transform:scale(1.1)}
+.placed-deco{position:absolute;font-size:22px;user-select:none;z-index:20;line-height:1;transition:none}
+.placed-deco:hover{transform:scale(1.15)}
+.deco-delete{position:absolute;top:-6px;right:-6px;width:16px;height:16px;background:var(--rose2);border-radius:50%;border:2px solid white;font-size:10px;color:white;display:flex;align-items:center;justify-content:center;display:none}
+.placed-deco:hover .deco-delete{display:flex}
+
+/* ═══ MODAL ═══ */
+.overlay{position:fixed;inset:0;background:rgba(74,42,58,.5);backdrop-filter:blur(8px);display:flex;align-items:center;justify-content:center;z-index:500;padding:16px}
+.modal{background:var(--card);border-radius:var(--rl);width:100%;max-width:420px;animation:popIn .3s ease;border:2px solid var(--pk-md);box-shadow:var(--sh-lg);overflow:hidden}
+.modal-body{padding:24px}
+
+/* ═══ TOAST ═══ */
+.toast{position:fixed;top:16px;left:50%;transform:translateX(-50%);border-radius:50px;padding:10px 20px;font-size:11px;font-weight:700;font-family:var(--bfont);z-index:9999;animation:toastSlide .3s ease;white-space:nowrap;max-width:88vw;box-shadow:var(--sh-lg)}
+.toast-ok{background:var(--pk3);color:white}.toast-err{background:var(--rose2);color:white}
+
+/* ═══ AUTH SCREEN ═══ */
+.auth-screen{position:fixed;inset:0;background:var(--grad);display:flex;align-items:center;justify-content:center;z-index:99999;overflow:hidden}
+.auth-deco{position:absolute;pointer-events:none;user-select:none;font-size:24px;opacity:.45;animation:float 3.5s ease-in-out infinite}
+.auth-card{position:relative;z-index:1;width:min(440px,90vw);background:var(--card);border:3px solid var(--pk2);border-radius:var(--rl);box-shadow:var(--sh-lg),0 0 0 5px rgba(232,118,168,.15);overflow:hidden;animation:popIn .4s ease}
+.auth-tabs{display:flex;gap:0;background:var(--pk-lt);border-radius:50px;padding:3px;border:2px solid var(--pk-md);margin-bottom:18px}
+.auth-tab{flex:1;padding:9px;border-radius:50px;border:none;font-family:var(--pfont);font-size:8px;background:none;color:var(--mu);transition:all .2s;letter-spacing:.3px}
+.auth-tab.active{background:var(--pk2);color:white;box-shadow:var(--sh-sm)}
+.auth-body{padding:22px 24px;overflow-y:auto;max-height:calc(100vh - 100px)}
+.auth-avatar{width:80px;height:80px;border-radius:50%;background:var(--pk-lt);border:3px solid var(--pk-md);display:flex;align-items:center;justify-content:center;margin:0 auto 14px;animation:float 2.5s ease-in-out infinite;font-size:36px}
+.auth-title{font-family:var(--pfont);font-size:12px;color:var(--pk3);margin-bottom:5px;text-align:center;letter-spacing:.5px}
+.auth-sub{font-size:11px;color:var(--mu);font-weight:700;margin-bottom:18px;text-align:center}
+.auth-field{margin-bottom:11px}
+.auth-label{font-size:8px;font-family:var(--pfont);color:var(--mu);display:block;margin-bottom:5px;letter-spacing:.3px}
+.auth-input{border:2px solid var(--pk-md)!important;background:var(--pk-lt)!important;border-radius:var(--rs)!important}
+.auth-input:focus{border-color:var(--pk2)!important;box-shadow:0 0 0 3px rgba(232,118,168,.12)!important}
+.auth-err{background:var(--rose-lt);border:2px solid var(--rose2);border-radius:var(--rs);padding:9px 12px;margin-bottom:12px;font-size:11px;color:var(--rose3);font-weight:700}
+.auth-divider{text-align:center;font-size:11px;color:var(--mu);font-weight:700;margin:12px 0;position:relative}
+.auth-divider::before{content:'';position:absolute;top:50%;left:0;right:0;height:1px;background:var(--pk-md)}
+.auth-divider span{background:var(--card);padding:0 10px;position:relative}
+
+/* ═══ FIREBASE SETUP ═══ */
+.setup-screen{position:fixed;inset:0;background:var(--grad);display:flex;align-items:center;justify-content:center;z-index:99998;overflow:hidden}
+.setup-card{width:min(480px,92vw);background:var(--card);border:3px solid var(--pk2);border-radius:var(--rl);box-shadow:var(--sh-lg);overflow:hidden;max-height:90vh;overflow-y:auto}
+.setup-step{display:flex;align-items:center;gap:8px;padding:10px 14px;background:var(--pk-lt);border-radius:var(--rs);border:1px solid var(--pk-md);margin-bottom:8px;font-size:11px;color:var(--tx);font-weight:600}
+.setup-num{width:22px;height:22px;background:var(--pk2);color:white;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:10px;font-weight:900;flex-shrink:0}
+
+/* ═══ CALENDAR NOTE ACTIONS ═══ */
+.note-actions{display:flex;gap:6px;margin-top:6px}
+.note-chip{display:inline-flex;align-items:center;gap:4px;padding:3px 10px;border-radius:50px;font-size:10px;font-weight:700;cursor:pointer;border:2px solid transparent;transition:all .15s}
+.note-chip.done{background:var(--mint-lt);color:var(--mint3);border-color:var(--mint2);text-decoration:line-through}
+.note-chip.deleted{background:var(--rose-lt);color:var(--rose3);border-color:var(--rose2)}
+
+/* ═══ CHARACTERS ═══ */
+.guide-companion{position:absolute;left:20px;bottom:8px;width:250px;height:170px;z-index:35;pointer-events:auto;animation:guideWalk 18s linear infinite}
+.guide-companion:hover,.guide-companion.paused{animation-play-state:paused}
+.guide-bubble{position:absolute;left:82px;bottom:106px;max-width:190px;background:var(--card);border:2px solid var(--pk2);border-radius:14px 14px 14px 4px;padding:8px 11px;color:var(--tx);font-size:10px;font-family:var(--bfont);font-weight:700;line-height:1.4;box-shadow:var(--sh-md);opacity:0;transform:translateY(6px);transition:opacity .2s,transform .2s;pointer-events:none;z-index:1}
+.guide-companion:hover .guide-bubble,.guide-companion.talk .guide-bubble{opacity:1;transform:translateY(0)}
+.pixel-girl{position:absolute;left:0;bottom:0;width:116px;height:138px;image-rendering:pixelated;animation:girlWalk .62s steps(2,end) infinite}
+.pixel-girl .hair-back{position:absolute;left:17px;top:20px;width:82px;height:90px;background:#2e2a2b;border:4px solid #191718}
+.pixel-girl .head{position:absolute;left:32px;top:20px;width:54px;height:50px;background:#fff1ea;border:4px solid #191718}
+.pixel-girl .bang{position:absolute;left:32px;top:20px;width:54px;height:16px;background:#302b2c;border-bottom:4px solid #191718}
+.pixel-girl .eye{position:absolute;top:40px;width:8px;height:8px;background:#191718;box-shadow:0 4px 0 var(--pk)}
+.pixel-girl .eye.l{left:44px}.pixel-girl .eye.r{left:67px}
+.pixel-girl .mouth{position:absolute;left:57px;top:56px;width:9px;height:3px;background:var(--pk2)}
+.pixel-girl .blush{position:absolute;top:51px;width:11px;height:5px;background:var(--pk);opacity:.9}
+.pixel-girl .blush.l{left:40px}.pixel-girl .blush.r{left:73px}
+.pixel-girl .headset{position:absolute;left:22px;top:14px;width:70px;height:38px;border:5px solid var(--pk);border-bottom:0}
+.pixel-girl .ear{position:absolute;top:36px;width:11px;height:20px;background:var(--pk);border:3px solid var(--pk2)}
+.pixel-girl .ear.l{left:22px}.pixel-girl .ear.r{right:22px}
+.pixel-girl .bow{position:absolute;left:52px;top:70px;width:14px;height:10px;background:var(--pk2);border:2px solid var(--pk3);box-shadow:-11px 0 0 var(--pk2),11px 0 0 var(--pk2)}
+.pixel-girl .body{position:absolute;left:36px;top:72px;width:46px;height:38px;background:var(--pk-md);border:3px solid var(--pk2)}
+.pixel-girl .skirt{position:absolute;left:31px;top:102px;width:56px;height:16px;background:var(--pk2);border:3px solid var(--pk3)}
+.pixel-girl .arm{position:absolute;top:78px;width:11px;height:34px;background:var(--pk-md);border:3px solid var(--pk2);transform-origin:top center}
+.pixel-girl .arm.l{left:25px}.pixel-girl .arm.r{right:25px}
+.pixel-girl .leg{position:absolute;top:110px;width:13px;height:22px;background:#fff1ea;border:3px solid var(--pk2)}
+.pixel-girl .leg.l{left:41px}.pixel-girl .leg.r{left:63px}
+.pixel-girl .shoe{position:absolute;top:126px;width:18px;height:7px;background:var(--pk-md);border:2px solid var(--pk2)}
+.pixel-girl .shoe.l{left:36px}.pixel-girl .shoe.r{left:62px}
+.guide-companion.read .pixel-girl .arm.l,.guide-companion.study .pixel-girl .arm.l{transform:rotate(-28deg)}
+.guide-companion.read .pixel-girl .arm.r,.guide-companion.study .pixel-girl .arm.r{transform:rotate(28deg)}
+.guide-companion.jump .pixel-girl{animation:girlJump .72s steps(3,end) infinite}
+
+/* CSS Ghost */
+.game-ghost{position:absolute;right:20px;bottom:12px;width:80px;height:90px;z-index:34;pointer-events:auto;animation:ghostFloat 13s ease-in-out infinite}
+.game-ghost:hover,.game-ghost.paused{animation-play-state:paused}
+.ghost-wrap{position:relative;width:56px;height:72px;margin:0 auto;animation:float 2.2s ease-in-out infinite}
+.ghost-head{width:56px;height:48px;background:linear-gradient(180deg,var(--lav),var(--lav-lt));border-radius:50% 50% 0 0;border:2px solid var(--lav2);box-shadow:0 4px 14px rgba(152,120,216,.3);position:relative}
+.ghost-eyes{position:absolute;top:16px;left:50%;transform:translateX(-50%);display:flex;gap:10px}
+.ghost-eye{width:7px;height:9px;background:var(--lav2);border-radius:50%}
+.ghost-bl{position:absolute;top:28px;width:10px;height:6px;background:var(--pk);border-radius:50%;opacity:.8}
+.ghost-bl.l{left:5px}.ghost-bl.r{right:5px}
+.ghost-tail{width:56px;height:18px;background:linear-gradient(180deg,var(--lav),var(--lav-lt));border:2px solid var(--lav2);border-top:none;clip-path:polygon(0 0,100% 0,100% 55%,87% 100%,73% 55%,60% 100%,47% 55%,33% 100%,20% 55%,7% 100%,0 55%);margin-top:-2px}
+.ghost-msg{position:absolute;right:48px;bottom:60px;max-width:120px;background:var(--lav-lt);border:2px solid var(--lav2);border-radius:10px 10px 4px 10px;padding:5px 8px;font-size:9px;font-family:var(--bfont);font-weight:700;color:var(--lav3);opacity:0;transform:translateY(6px);transition:.2s;box-shadow:var(--sh-sm)}
+.game-ghost:hover .ghost-msg{opacity:1;transform:translateY(0)}
+
+/* ═══ DECORATIONS ═══ */
+.decor-branch{position:absolute;width:180px;opacity:.6;right:8px;bottom:6px;image-rendering:pixelated;filter:drop-shadow(5px 6px 0 rgba(74,42,58,.15));z-index:0;pointer-events:none}
+.decor-clouds{position:fixed;inset:auto auto 4px 8px;width:min(18vw,160px);opacity:.12;z-index:0;pointer-events:none;image-rendering:pixelated}
+
+/* ═══ ANIMATIONS ═══ */
+@keyframes fadeUp{from{opacity:0;transform:translateY(14px)}to{opacity:1;transform:translateY(0)}}
+@keyframes popIn{0%{transform:scale(.85);opacity:0}70%{transform:scale(1.04)}100%{transform:scale(1);opacity:1}}
+@keyframes bounce{0%,100%{transform:translateY(0)}50%{transform:translateY(-7px)}}
+@keyframes float{0%,100%{transform:translateY(0)}50%{transform:translateY(-9px)}}
+@keyframes shimmer{0%{background-position:200% 0}100%{background-position:-200% 0}}
+@keyframes toastSlide{from{opacity:0;transform:translateX(-50%) translateY(-8px)}to{opacity:1;transform:translateX(-50%) translateY(0)}}
+@keyframes guideWalk{0%{left:18px}50%{left:calc(100% - 280px)}100%{left:18px}}
+@keyframes ghostFloat{0%{right:20px;transform:translateY(0)}42%{right:calc(100% - 108px);transform:translateY(-12px)}52%{right:calc(100% - 108px);transform:translateY(0)}92%{right:20px;transform:translateY(-12px)}100%{right:20px;transform:translateY(0)}}
+@keyframes girlWalk{0%,100%{transform:translateY(0)}50%{transform:translateY(-4px)}}
+@keyframes girlJump{0%,100%{transform:translateY(0)}45%{transform:translateY(-24px)}}
+@keyframes loadBar{0%{width:10%}35%{width:60%}70%{width:45%}90%{width:82%}100%{width:94%}}
+@keyframes entrySlide{from{opacity:0;transform:translateY(24px) scale(.96)}to{opacity:1;transform:translateY(0) scale(1)}}
+@keyframes spin{to{transform:rotate(360deg)}}
+
+.fade-up{height:100%;overflow-y:auto;overflow-x:hidden}
+.pop-in{}
+.asset-img{display:block;object-fit:contain;user-select:none;pointer-events:none}
+.skel{background:linear-gradient(90deg,var(--bd) 25%,var(--pk-lt) 50%,var(--bd) 75%);background-size:200% 100%;animation:shimmer 1.4s infinite;border-radius:8px}
+.api-alert{background:var(--pk-lt);border:1px solid var(--pk-md);border-radius:var(--rs);padding:9px 11px;margin-top:6px}
+.api-alert p{font-size:11px;color:var(--mu);line-height:1.4}
+.loading-screen{min-height:100vh;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:18px;background:var(--grad)}
+
+@media(max-width:768px){
+  .guide-companion{bottom:70px;width:200px;height:138px;animation:guideWalkM 14s linear infinite}
+  @keyframes guideWalkM{0%{left:4px}50%{left:calc(100% - 210px)}100%{left:4px}}
+  .game-ghost{bottom:70px}
+}
+</style>
+</head>
+<body>
+<div id="app-shell"><div id="root" style="width:100%;display:contents;"></div><div id="bbx-fallback" style="position:fixed;inset:0;display:none;align-items:center;justify-content:center;background:rgba(0,0,0,.65);color:#fff;z-index:100000;padding:20px;font-family:system-ui;">StudyBuddy failed to load. Check your internet connection, then refresh.</div></div>
+<script>
+if(!window.React||!window.ReactDOM){
+  const fallback=document.getElementById('bbx-fallback');
+  if(fallback)fallback.style.display='flex';
+  throw new Error('React failed to load');
+}
+/*
+ * ╔══════════════════════════════════════════════════════╗
+ * ║  SECURITY ARCHITECTURE                                ║
+ * ║  • Firebase Auth: all access requires authentication  ║
+ * ║  • Firestore Rules: users read/write ONLY own data    ║
+ * ║  • API keys: obfuscated in Firestore, never in DOM    ║
+ * ║  • React: XSS protected by default (no innerHTML)     ║
+ * ║  • No sensitive data in localStorage after setup      ║
+ * ║  • Auth state managed by Firebase SDK (secure)        ║
+ * ╚══════════════════════════════════════════════════════╝
+ */
+const{useState,useEffect,useRef,useCallback,useMemo}=React;
+const E=React.createElement;
+
+// ─── Firebase globals (set after init) ───
+let _db=null,_auth=null;
+
+// ─── Security: obfuscate API key in DB (not encryption — use backend proxy for production) ───
+const obf=(s,k)=>{if(!s||!k)return'';try{const d=[...s].map((c,i)=>c.charCodeAt(0)^k.charCodeAt(i%k.length));return btoa(String.fromCharCode(...d));}catch{return'';}};
+const deo=(s,k)=>{if(!s||!k)return'';try{const d=Uint8Array.from(atob(s),c=>c.charCodeAt(0));return[...d].map((b,i)=>String.fromCharCode(b^k.charCodeAt(i%k.length))).join('');}catch{return'';}};
+
+// ─── Firebase Config Storage (config is PUBLIC — security via Rules) ───
+const getFBConfig=()=>{try{const c=localStorage.getItem('sb_fb_cfg');return c?JSON.parse(atob(c)):null;}catch{return null;}};
+const setFBConfig=cfg=>{try{localStorage.setItem('sb_fb_cfg',btoa(JSON.stringify(cfg)));}catch{}};
+
+// ─── Init Firebase ───
+function initFirebase(cfg){
+  if(typeof firebase==='undefined')return false;
+  try{
+    if(!firebase.apps.length)firebase.initializeApp(cfg);
+    _auth=firebase.auth();
+    _db=firebase.firestore();
+    _db.enablePersistence({synchronizeTabs:true}).catch(()=>{});
+    return true;
+  }catch(e){console.error('Firebase init failed',e);return false;}
+}
+
+// ─── Try init from stored config ───
+const savedCfg=getFBConfig();
+if(savedCfg)initFirebase(savedCfg);
+
+// ─── Auth functions ───
+const fbSignUp=async(email,password,name)=>{
+  if(!_auth)throw new Error('Firebase not configured');
+  const cred=await _auth.createUserWithEmailAndPassword(email,password);
+  await cred.user.updateProfile({displayName:name});
+  // Create user document in Firestore
+  await _db.doc(`users/${cred.user.uid}`).set({
+    name,email,createdAt:firebase.firestore.FieldValue.serverTimestamp(),
+    theme:'pink',iconSet:'default'
+  });
+  return cred.user;
+};
+
+const fbSignIn=async(email,password)=>{
+  if(!_auth)throw new Error('Firebase not configured');
+  const cred=await _auth.signInWithEmailAndPassword(email,password);
+  return cred.user;
+};
+
+const fbSignOut=async()=>{if(_auth)await _auth.signOut();};
+
+const fbResetPassword=async email=>{
+  if(!_auth)throw new Error('Firebase not configured');
+  await _auth.sendPasswordResetEmail(email);
+};
+
+// ─── Firestore CRUD ───
+const fsGet=async path=>{
+  if(!_db)return null;
+  try{const d=await _db.doc(path).get();return d.exists?{id:d.id,...d.data()}:null;}catch{return null;}
+};
+const fsSet=async(path,data,merge=true)=>{
+  if(!_db)return;
+  try{await _db.doc(path).set(data,{merge});}catch(e){console.error('fsSet',e);}
+};
+const fsUpdate=async(path,data)=>{
+  if(!_db)return;
+  try{await _db.doc(path).update(data);}catch(e){console.error('fsUpdate',e);}
+};
+const fsDelete=async path=>{
+  if(!_db)return;
+  try{await _db.doc(path).delete();}catch(e){console.error('fsDelete',e);}
+};
+const fsCollection=async path=>{
+  if(!_db)return[];
+  try{const s=await _db.collection(path).get();return s.docs.map(d=>({id:d.id,...d.data()}));}catch{return[];}
+};
+
+// ─── User data helpers ───
+const uPath=(uid,sub='')=>sub?`users/${uid}/${sub}`:`users/${uid}`;
+const saveProgress=async(uid,date,data)=>fsSet(uPath(uid,`progress/${date}`),{...data,updatedAt:firebase.firestore.FieldValue.serverTimestamp()});
+const loadProgress=async uid=>{
+  if(!_db||!uid)return{};
+  try{
+    const snap=await _db.collection(uPath(uid,'progress')).get();
+    const result={};
+    snap.docs.forEach(d=>{result[d.id]={...d.data()};});
+    return result;
+  }catch{return{};}
+};
+const saveCalNote=async(uid,date,data)=>fsSet(uPath(uid,`calendar/${date}`),{...data,updatedAt:firebase.firestore.FieldValue.serverTimestamp()});
+const loadCalNotes=async uid=>{
+  if(!_db||!uid)return{};
+  try{
+    const snap=await _db.collection(uPath(uid,'calendar')).get();
+    const result={};
+    snap.docs.forEach(d=>{result[d.id]={...d.data()};});
+    return result;
+  }catch{return{};}
+};
+const saveSettings=async(uid,settings,apiKey='')=>{
+  const data={...settings};
+  if(apiKey)data.apiKeyEnc=obf(apiKey,uid);
+  await fsSet(uPath(uid,'settings/preferences'),data);
+};
+const loadSettings=async uid=>{
+  if(!uid)return{};
+  const d=await fsGet(uPath(uid,'settings/preferences'));
+  return d||{};
+};
+const saveStudySession=async(uid,sessionData)=>{
+  if(!_db||!uid)return;
+  try{await _db.collection(uPath(uid,'studySessions')).add({...sessionData,createdAt:firebase.firestore.FieldValue.serverTimestamp()});}catch{}
+};
+
+// ─── File extractors ───
+async function extractFile(file){
+  const ext=file.name.split('.').pop().toLowerCase();
+  if(ext==='txt'||ext==='md')return await file.text();
+  if(ext==='pdf'){
+    try{if(window.pdfjsLib){window.pdfjsLib.GlobalWorkerOptions.workerSrc='https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.worker.min.js';const ab=await file.arrayBuffer();const pdf=await window.pdfjsLib.getDocument({data:ab}).promise;let t='';for(let i=1;i<=Math.min(pdf.numPages,30);i++){const pg=await pdf.getPage(i);const ct=await pg.getTextContent();t+=ct.items.map(x=>x.str).join(' ')+'\n';}return t.trim()||`[PDF: ${file.name}]`;}}catch{}
+    return`[PDF: ${file.name} — paste content below]`;
+  }
+  if(ext==='docx'){try{if(window.mammoth){const ab=await file.arrayBuffer();const r=await window.mammoth.extractRawText({arrayBuffer:ab});return r.value||`[DOCX: ${file.name}]`;}}catch{}return`[DOCX: ${file.name}]`;}
+  if(ext==='pptx'){
+    try{if(window.JSZip){const zip=await window.JSZip.loadAsync(file);const slides=Object.keys(zip.files).filter(n=>/ppt\/slides\/slide\d+\.xml/.test(n)).sort((a,b)=>parseInt(a.match(/slide(\d+)/)[1])-parseInt(b.match(/slide(\d+)/)[1]));let t='';for(const n of slides){const xml=await zip.files[n].async('text');const ms=xml.match(/<a:t>([^<]*)<\/a:t>/g)||[];const txt=ms.map(x=>x.replace(/<\/?a:t>/g,'')).filter(Boolean).join(' ');if(txt.trim())t+='[Slide] '+txt.trim()+'\n';}return t.trim()||`[PPTX: ${file.name}]`;}}catch{}
+    return`[PPTX: ${file.name}]`;
+  }
+  return`[${ext.toUpperCase()}: ${file.name} — paste content below]`;
+}
+
+// ─── Helpers ───
+const parseJ=s=>{try{return JSON.parse(s.replace(/```json\n?/gi,'').replace(/```\n?/g,'').trim());}catch{return null;}};
+const fmt=s=>{const h=Math.floor(s/3600),m=Math.floor(s%3600/60),sc=s%60;return h>0?`${h}:${String(m).padStart(2,'0')}:${String(sc).padStart(2,'0')}`:`${String(m).padStart(2,'0')}:${String(sc).padStart(2,'0')}`;};
+const todayKey=()=>new Date().toISOString().slice(0,10);
+
+// ─── Palette (used in JSX styles) ───
+const getPalette=theme=>{
+  const map={
+    pink:{lav:{light:'#ecdeff',mid:'#c8b0f0',dark:'#9878d8',text:'#5828b0'},mint:{light:'#d0f4e4',mid:'#88d8b0',dark:'#38b880',text:'#106840'},rose:{light:'#ffe0ee',mid:'#f8a8c8',dark:'#e83880',text:'#b01860'},peach:{light:'#fff0d8',mid:'#ffd098',dark:'#e89038',text:'#b06018'},sky:{light:'#d8e7ff',mid:'#98c0f8',dark:'#4880e0',text:'#1848c0'}},
+    blue:{lav:{light:'#d8e7ff',mid:'#98c0f8',dark:'#4880e0',text:'#1848c0'},mint:{light:'#d0f4e4',mid:'#88d8b0',dark:'#38b880',text:'#106840'},rose:{light:'#ffe0ee',mid:'#f8a8c8',dark:'#e83880',text:'#b01860'},peach:{light:'#fff0d8',mid:'#ffd098',dark:'#e89038',text:'#b06018'},sky:{light:'#d8e7ff',mid:'#98c0f8',dark:'#4880e0',text:'#1848c0'}},
+    purple:{lav:{light:'#f5f0ff',mid:'#d0b8f0',dark:'#7858d8',text:'#5028a8'},mint:{light:'#d0f4e4',mid:'#88d8b0',dark:'#38b880',text:'#106840'},rose:{light:'#ffe0ee',mid:'#f8a8c8',dark:'#e83880',text:'#b01860'},peach:{light:'#fff0d8',mid:'#ffd098',dark:'#e89038',text:'#b06018'},sky:{light:'#d8e7ff',mid:'#98c0f8',dark:'#4880e0',text:'#1848c0'}},
+    dark:{lav:{light:'#200a30',mid:'#5a3880',dark:'#c898f8',text:'#f0c8ff'},mint:{light:'#082818',mid:'#305840',dark:'#88f8c8',text:'#c0fff0'},rose:{light:'#280810',mid:'#582828',dark:'#f89898',text:'#ffc0c0'},peach:{light:'#281808',mid:'#584028',dark:'#f8c878',text:'#ffecc0'},sky:{light:'#081828',mid:'#284858',dark:'#88c8f8',text:'#c0e8ff'}}
+  };
+  return map[theme]||map.pink;
+};
+
+// ─── Theme definitions ───
+const themes=[
+  {id:'pink',name:'Sakura Pink',emoji:'🌸',swatches:['#f8bfd7','#e876a8','#9878d8','#d0f4e4']},
+  {id:'blue',name:'Ocean Blue',emoji:'🌊',swatches:['#b8d8ff','#3870d8','#38b8d0','#d0f4e4']},
+  {id:'purple',name:'Lavender Dream',emoji:'💜',swatches:['#e8d8ff','#7858d8','#d858a8','#d0f4e4']},
+  {id:'dark',name:'Midnight Mode',emoji:'🌙',swatches:['#3a2050','#c898f8','#88c8f8','#88f8c8']}
+];
+
+const DEFAULT_ICONS={home:'🏠',notes:'📝',study:'📚',calendar:'📅',focus:'⏰',settings:'⚙️'};
+const DECO_PALETTE=['🌸','⭐','💫','✨','🌙','☁️','💕','🎀','📚','☕','🌈','🦋','🎵','🍀','🌟','💎','🎨','🌺'];
+
+const Img=({src,cls='',alt='',style={}})=>E('img',{className:`asset-img ${cls}`,src,alt,style,onError:ev=>{ev.target.style.opacity='0'}});
+const assets={girl:'My_little_star-removebg-preview.png',coffee:'coffee-removebg-preview.png',book:'book_-removebg-preview.png',folder:'folder_icon-removebg-preview.png',calendar:'calender_icon-removebg-preview.png',brain:'brain_icon-removebg-preview.png',computer:'computer_icon-removebg-preview.png',headphones:'headphone_icon-removebg-preview.png',cat:'black_cat-removebg-preview.png',jelly:'pink_jellyfish-removebg-preview.png',turtle:'blue_turtle-removebg-preview.png'};
+
+// ══════════════════════════════════════════════
+//  FIREBASE SETUP SCREEN
+// ══════════════════════════════════════════════
+function FirebaseSetupScreen({onDone}){
+  const[cfg,setCfg]=useState({apiKey:'',authDomain:'',projectId:'',storageBucket:'',messagingSenderId:'',appId:''});
+  const[err,setErr]=useState('');
+  const[loading,setLoading]=useState(false);
+  const handleSubmit=async e=>{
+    e.preventDefault();setErr('');setLoading(true);
+    if(!cfg.apiKey||!cfg.projectId||!cfg.authDomain){setErr('API Key, Auth Domain and Project ID are required.');setLoading(false);return;}
+    const ok=initFirebase(cfg);
+    if(ok){setFBConfig(cfg);onDone();}
+    else{setErr('Invalid config. Check your Firebase project settings.');}
+    setLoading(false);
+  };
+  return E('div',{className:'setup-screen'},
+    E('div',{className:'setup-card'},
+      E('div',{className:'pw-bar rounded-top'},E('span',{className:'pw-dot'}),E('span',{className:'pw-dot'}),E('span',{className:'pw-dot'}),E('span',{className:'pw-ttl'},'firebase.setup')),
+      E('div',{style:{padding:'22px 22px'}},
+        E('div',{style:{textAlign:'center',marginBottom:18}},
+          E('div',{style:{fontSize:36,marginBottom:10}},'🔥'),
+          E('div',{style:{fontFamily:'var(--pfont)',fontSize:11,color:'var(--pk3)',marginBottom:5}},'Firebase Setup'),
+          E('div',{style:{fontSize:12,color:'var(--mu)',fontWeight:700}},'Connect your Firebase project to enable auth & data sync.')
+        ),
+        E('div',{style:{marginBottom:14}},
+          [['Step 1','Go to console.firebase.google.com → Create project'],
+           ['Step 2','Enable Email/Password Auth under Authentication'],
+           ['Step 3','Create Firestore Database (production mode)'],
+           ['Step 4','Add Firestore Security Rules (see comments in source)'],
+           ['Step 5','Get config from Project Settings → General → Your Apps']
+          ].map(([n,t])=>E('div',{key:n,className:'setup-step'},E('div',{className:'setup-num'},n.slice(-1)),t))
+        ),
+        err&&E('div',{className:'auth-err'},err),
+        E('form',{onSubmit:handleSubmit},
+          [['apiKey','API Key','AIza...'],['authDomain','Auth Domain','project.firebaseapp.com'],
+           ['projectId','Project ID','my-project'],['appId','App ID','1:123:web:abc']].map(([k,l,ph])=>
+            E('div',{key:k,className:'auth-field'},
+              E('label',{className:'auth-label'},l+' *'),
+              E('input',{className:'auth-input',type:'text',placeholder:ph,value:cfg[k],onChange:ev=>setCfg(p=>({...p,[k]:ev.target.value})),required:['apiKey','authDomain','projectId','appId'].includes(k)})
+            )
+          ),
+          E('button',{className:'btn btn-primary btn-block',type:'submit',style:{marginTop:14,padding:'12px'},disabled:loading},loading?'Connecting…':'Connect Firebase ✦')
+        )
+      )
+    )
+  );
+}
+
+// ══════════════════════════════════════════════
+//  AUTH SCREEN
+// ══════════════════════════════════════════════
+function AuthScreen({onAuth}){
+  const[tab,setTab]=useState('login');
+  const[name,setName]=useState('');
+  const[email,setEmail]=useState('');
+  const[pass,setPass]=useState('');
+  const[passConf,setPassConf]=useState('');
+  const[remember,setRemember]=useState(false);
+  const[loading,setLoading]=useState(false);
+  const[err,setErr]=useState('');
+  const[resetSent,setResetSent]=useState(false);
+
+  const handleSubmit=async e=>{
+    e.preventDefault();setErr('');setLoading(true);
+    try{
+      if(tab==='signup'){
+        if(pass!==passConf){setErr('Passwords do not match.');setLoading(false);return;}
+        if(pass.length<8){setErr('Password must be at least 8 characters.');setLoading(false);return;}
+        if(!name.trim()){setErr('Please enter your display name.');setLoading(false);return;}
+        const user=await fbSignUp(email,pass,name.trim());
+        onAuth(user);
+      }else if(tab==='reset'){
+        await fbResetPassword(email);
+        setResetSent(true);
+      }else{
+        const user=await fbSignIn(email,pass);
+        if(remember)localStorage.setItem('sb_remember','1');
+        onAuth(user);
+      }
+    }catch(e){
+      const msgs={'auth/user-not-found':'No account found with this email.','auth/wrong-password':'Incorrect password.','auth/email-already-in-use':'Email already registered.','auth/invalid-email':'Invalid email address.','auth/too-many-requests':'Too many attempts. Try again later.'};
+      setErr(msgs[e.code]||e.message);
+    }
+    setLoading(false);
+  };
+
+  const decos=[['🌸',{top:'8%',left:'8%',animationDelay:'0s'}],['⭐',{top:'12%',right:'10%',animationDelay:'.5s'}],['💫',{bottom:'20%',left:'6%',animationDelay:'1s'}],['✿',{bottom:'12%',right:'8%',animationDelay:'1.5s'}],['☁️',{top:'40%',left:'3%',animationDelay:'.3s',fontSize:'16px'}],['♪',{top:'55%',right:'4%',animationDelay:'1.2s',fontSize:'16px'}]];
+
+  return E('div',{className:'auth-screen'},
+    ...decos.map(([d,s])=>E('div',{key:d,className:'auth-deco',style:{...s}},d)),
+    E('div',{className:'auth-card'},
+      E('div',{className:'pw-bar'},E('span',{className:'pw-dot'}),E('span',{className:'pw-dot'}),E('span',{className:'pw-dot'}),E('span',{className:'pw-ttl'},tab==='signup'?'signup.new':tab==='reset'?'reset.password':'login.welcome')),
+      E('div',{className:'auth-body'},
+        E('div',{className:'auth-avatar'},tab==='signup'?'🌟':'✿'),
+        E('div',{className:'auth-title'},tab==='signup'?'Create Account':tab==='reset'?'Reset Password':'Welcome Back'),
+        E('div',{className:'auth-sub'},tab==='signup'?'start your study journey ✿':tab==='reset'?'we\'ll send a reset link':'continue your study journey ✦'),
+        tab!=='reset'&&E('div',{className:'auth-tabs'},
+          E('button',{type:'button',className:`auth-tab ${tab==='login'?'active':''}`,onClick:()=>{setTab('login');setErr('')}},'Login'),
+          E('button',{type:'button',className:`auth-tab ${tab==='signup'?'active':''}`,onClick:()=>{setTab('signup');setErr('')}},'Sign Up')
+        ),
+        err&&E('div',{className:'auth-err'},err),
+        resetSent&&E('div',{style:{background:'var(--mint-lt)',border:'2px solid var(--mint2)',borderRadius:'var(--rs)',padding:'10px 12px',marginBottom:12,fontSize:12,color:'var(--mint3)',fontWeight:700}},'✓ Reset email sent! Check your inbox.'),
+        E('form',{onSubmit:handleSubmit},
+          tab==='signup'&&E('div',{className:'auth-field'},
+            E('label',{className:'auth-label'},'Display Name *'),
+            E('input',{className:'auth-input',type:'text',placeholder:'your name ✿',value:name,onChange:e=>setName(e.target.value),required:true})
+          ),
+          E('div',{className:'auth-field'},
+            E('label',{className:'auth-label'},'Email *'),
+            E('input',{className:'auth-input',type:'email',placeholder:'your@email.com',value:email,onChange:e=>setEmail(e.target.value),required:true,autoComplete:'email'})
+          ),
+          tab!=='reset'&&E('div',{className:'auth-field'},
+            E('label',{className:'auth-label'},'Password *'),
+            E('input',{className:'auth-input',type:'password',placeholder:'••••••••',value:pass,onChange:e=>setPass(e.target.value),required:true,autoComplete:tab==='login'?'current-password':'new-password'})
+          ),
+          tab==='signup'&&E('div',{className:'auth-field'},
+            E('label',{className:'auth-label'},'Confirm Password *'),
+            E('input',{className:'auth-input',type:'password',placeholder:'••••••••',value:passConf,onChange:e=>setPassConf(e.target.value),required:true})
+          ),
+          tab==='login'&&E('div',{style:{display:'flex',alignItems:'center',gap:8,marginBottom:14}},
+            E('input',{type:'checkbox',id:'rem',checked:remember,onChange:e=>setRemember(e.target.checked)}),
+            E('label',{htmlFor:'rem',style:{fontSize:11,color:'var(--mu)',fontWeight:700}},'Remember me')
+          ),
+          E('button',{className:'btn btn-primary btn-block',type:'submit',disabled:loading,style:{padding:'12px',marginBottom:10}},
+            loading?'Please wait…':tab==='signup'?'Create Account ✿':tab==='reset'?'Send Reset Link':'Login ✦'
+          ),
+          tab==='login'&&E('button',{type:'button',className:'btn btn-ghost btn-block',onClick:()=>{setTab('reset');setErr('');setResetSent(false);},style:{fontSize:11}},'Forgot password?'),
+          tab==='reset'&&E('button',{type:'button',className:'btn btn-ghost btn-block',onClick:()=>{setTab('login');setErr('');setResetSent(false);}},
+            '← Back to Login'
+          )
+        )
+      )
+    )
+  );
+}
+
+// ══════════════════════════════════════════════
+//  API CALL
+// ══════════════════════════════════════════════
+async function callClaude(prompt,sys="You are StudyBuddy AI.",tools=null,apiKey=''){
+  if(!apiKey)throw new Error('AUTH_REQUIRED');
+  const headers={"Content-Type":"application/json","x-api-key":apiKey,"anthropic-version":"2023-06-01","anthropic-dangerous-direct-browser-access":"true"};
+  const body={model:"claude-sonnet-4-20250514",max_tokens:1400,system:sys,messages:[{role:"user",content:prompt}]};
+  if(tools)body.tools=tools;
+  const r=await fetch("https://api.anthropic.com/v1/messages",{method:"POST",headers,body:JSON.stringify(body)});
+  if(!r.ok){let msg="API error";try{const d=await r.json();msg=d.error?.message||msg;}catch{}if(r.status===401||r.status===403)throw new Error("AUTH_REQUIRED");throw new Error(msg);}
+  const d=await r.json();
+  return d.content.map(b=>b.text||"").filter(Boolean).join("");
+}
+
+// ══════════════════════════════════════════════
+//  MAIN APP
+// ══════════════════════════════════════════════
+function App({user}){
+  const uid=user.uid;
+  const[screen,setScreen]=useState('home');
+  const[studyTab,setStudyTab]=useState('cards');
+  const[notes,setNotes]=useState('');
+  const[topic,setTopic]=useState('');
+  const[diff,setDiff]=useState('medium');
+  const[loading,setLoading]=useState(false);
+  const[loadMsg,setLoadMsg]=useState('');
+  const[toast,setToast]=useState(null);
+  const[showApiModal,setShowApiModal]=useState(false);
+  const[apiKey,setApiKey]=useState('');// in-memory only, never stored in DOM
+  const[apiKeyInput,setApiKeyInput]=useState('');
+  const[uploadedSrc,setUploadedSrc]=useState([]);
+  const[urlIn,setUrlIn]=useState('');
+  const[guideLine,setGuideLine]=useState('Hi! I\'m your study buddy ✿');
+  const[guideState,setGuideState]=useState({action:'wave',talk:true});
+  // Study data
+  const[cards,setCards]=useState([]);
+  const[cardIdx,setCardIdx]=useState(0);
+  const[flipped,setFlipped]=useState(false);
+  const[cardRatings,setCardRatings]=useState({});
+  const[quiz,setQuiz]=useState(null);
+  const[answers,setAnswers]=useState({});
+  const[submitted,setSubmitted]=useState(false);
+  const[qtab,setQtab]=useState('mcq');
+  const[score,setScore]=useState(null);
+  const[viva,setViva]=useState([]);
+  const[vivaIn,setVivaIn]=useState('');
+  const[vivaLoading,setVivaLoading]=useState(false);
+  // Focus
+  const[focusSec,setFocusSec]=useState(0);
+  const[focusOn,setFocusOn]=useState(false);
+  const[breakType,setBreakType]=useState(null);
+  const[breakSec,setBreakSec]=useState(0);
+  // Progress & calendar (loaded from Firestore)
+  const[progress,setProgress]=useState({});
+  const[calNotes,setCalNotes]=useState({});
+  const[calDate,setCalDate]=useState(new Date());
+  const[selDay,setSelDay]=useState(null);
+  const[dailyTip,setDailyTip]=useState('');
+  // Settings
+  const[theme,setTheme]=useState('pink');
+  const[icons,setIcons]=useState({...DEFAULT_ICONS});
+  const[decorations,setDecorations]=useState([]);// [{id,emoji,x,y}]
+  const[settingsTab,setSettingsTab]=useState('theme');
+  const[appLoaded,setAppLoaded]=useState(false);
+  // Dragging decorations
+  const[dragging,setDragging]=useState(null);// {id, offsetX, offsetY}
+  const mainRef=useRef();
+  const timerRef=useRef();const breakRef=useRef();const vivaRef=useRef();
+  const guideInitRef=useRef(false);const focusMinRef=useRef(0);
+  const today=todayKey();
+  const todayProg=progress[today]||{studyMin:0,cards:0,quizScores:[],topics:[],completed:false};
+  const avgQ=todayProg.quizScores?.length>0?Math.round(todayProg.quizScores.reduce((a,b)=>a+b,0)/todayProg.quizScores.length):0;
+  const pal=useMemo(()=>getPalette(theme),[theme]);
+
+  // ─── Load user data from Firestore on mount ───
+  useEffect(()=>{
+    (async()=>{
+      try{
+        const[progs,settings,calData]=await Promise.all([loadProgress(uid),loadSettings(uid),loadCalNotes(uid)]);
+        setProgress(progs||{});
+        setCalNotes(calData||{});
+        if(settings.theme)setTheme(settings.theme);
+        if(settings.icons)setIcons({...DEFAULT_ICONS,...settings.icons});
+        if(settings.decorations)setDecorations(settings.decorations);
+        if(settings.apiKeyEnc){const k=deo(settings.apiKeyEnc,uid);if(k)setApiKey(k);}
+        document.documentElement.setAttribute('data-theme',settings.theme||'pink');
+      }catch(e){console.error('Load settings error',e);}
+      setAppLoaded(true);
+      callClaude("Give ONE short actionable study tip in 1–2 sentences. Plain text, no markdown.","You are a concise study coach.",null,apiKey)
+        .then(t=>setDailyTip(t)).catch(()=>setDailyTip("Spaced repetition beats cramming — review after 1 day, 3 days, then 1 week."));
+    })();
+  },[uid]);
+
+  // ─── Save settings to Firestore on change ───
+  useEffect(()=>{
+    if(!appLoaded)return;
+    document.documentElement.setAttribute('data-theme',theme);
+    saveSettings(uid,{theme,icons,decorations},apiKey);
+  },[theme,icons,decorations,apiKey,appLoaded]);
+
+  // ─── Timers ───
+  useEffect(()=>{
+    if(focusOn){timerRef.current=setInterval(()=>setFocusSec(s=>{const ns=s+1;const mins=Math.floor(ns/60);if(mins>focusMinRef.current){focusMinRef.current=mins;updProg({studyMin:mins});}return ns;}),1000);}
+    return()=>clearInterval(timerRef.current);
+  },[focusOn]);
+  useEffect(()=>{if(breakType)breakRef.current=setInterval(()=>setBreakSec(s=>s+1),1000);return()=>clearInterval(breakRef.current);},[breakType]);
+  useEffect(()=>{if(vivaRef.current)vivaRef.current.scrollTop=vivaRef.current.scrollHeight;},[viva]);
+  useEffect(()=>{
+    if(!guideInitRef.current){guideInitRef.current=true;return;}
+    runGuide(guideAction[screen]||'wave',guideLines[screen]||guideLines.home,true);
+  },[screen]);
+  useEffect(()=>{},[focusOn,screen]);
+
+  const showToast=(msg,type='ok')=>{setToast({msg,type});setTimeout(()=>setToast(null),3400);};
+  const updProg=(upd)=>{
+    const t=todayKey();
+    setProgress(prev=>{
+      const n={...prev};
+      if(!n[t])n[t]={studyMin:0,cards:0,quizScores:[],topics:[],completed:false};
+      Object.assign(n[t],upd);
+      saveProgress(uid,t,n[t]);
+      return n;
+    });
+  };
+  const updCalNote=(dateKey,upd)=>{
+    setCalNotes(prev=>{
+      const n={...prev};
+      if(!n[dateKey])n[dateKey]={note:'',completed:false,deleted:false};
+      Object.assign(n[dateKey],upd);
+      saveCalNote(uid,dateKey,n[dateKey]);
+      return n;
+    });
+  };
+
+  const safeAI=async fn=>{try{return await fn();}catch(err){if(err.message==='AUTH_REQUIRED'){setShowApiModal(true);throw new Error('Enter your API key in Settings → API Key.');}throw err;}};
+
+  const handleFile=async file=>{
+    if(!file)return;setLoading(true);setLoadMsg(`Reading ${file.name}…`);
+    try{const txt=await extractFile(file);setNotes(p=>(p?p+'\n\n':'')+txt);setUploadedSrc(p=>[...p,{name:file.name,type:file.name.split('.').pop().toUpperCase()}]);showToast(`${file.name} loaded`);}
+    catch{showToast('Error reading file','err');}
+    setLoading(false);
+  };
+  const handleURL=async()=>{
+    if(!urlIn.trim())return;setLoading(true);setLoadMsg('Fetching URL content…');
+    try{const c=await safeAI(()=>callClaude(`Summarise educational content from: ${urlIn}\nCreate study notes if you can't access the URL.`,'You are a study assistant.',
+      [{type:'web_search_20250305',name:'web_search'}],apiKey));
+      setNotes(p=>(p?p+'\n\n':'')+`[From: ${urlIn}]\n`+c);setUploadedSrc(p=>[...p,{name:urlIn.length>38?urlIn.slice(0,36)+'…':urlIn,type:'URL'}]);setUrlIn('');showToast('URL loaded');
+    }catch(e){showToast(e.message,'err');}
+    setLoading(false);
+  };
+
+  const genCards=async()=>{
+    if(!notes.trim()){showToast('Add notes first','err');return;}
+    setLoading(true);setLoadMsg('Creating flashcards ✿');
+    try{const r=await safeAI(()=>callClaude(`Create spaced-repetition flashcards:\n\nNOTES:\n${notes.slice(0,3500)}\n\nReturn ONLY valid JSON:\n[{"front":"Q","back":"A","tag":"category","difficulty":"easy|medium|hard"}]\n12-15 cards.`,'You are a study specialist.',null,apiKey));
+      const p=parseJ(r);
+      if(p&&Array.isArray(p)){setCards(p);setCardIdx(0);setFlipped(false);setCardRatings({});setStudyTab('cards');setScreen('study');updProg({cards:(todayProg.cards||0)+p.length,topics:[...new Set([...(todayProg.topics||[]),topic||'Session'])]});showToast('Flashcards ready ✦');}
+      else showToast('Parse error — try again','err');
+    }catch(e){showToast(e.message,'err');}
+    setLoading(false);
+  };
+  const genQuiz=async()=>{
+    if(!notes.trim()){showToast('Add notes first','err');return;}
+    setLoading(true);setLoadMsg('Generating quiz ✿');
+    try{const r=await safeAI(()=>callClaude(`Generate ${diff} quiz:\n\nNOTES:\n${notes.slice(0,3500)}\n\nReturn ONLY valid JSON:\n{"mcq":[{"q":"?","opts":["A","B","C","D"],"ans":0,"exp":"explanation"}],"tf":[{"q":"statement","ans":true,"exp":"explanation"}],"short":[{"q":"?","ans":"model answer"}]}\n5 MCQs, 4 T/F, 4 short.`,null,null,apiKey));
+      const p=parseJ(r);
+      if(p&&p.mcq){setQuiz(p);setAnswers({});setSubmitted(false);setQtab('mcq');setScore(null);setStudyTab('quiz');setScreen('study');showToast('Quiz ready ✦');}
+      else showToast('Parse error — try again','err');
+    }catch(e){showToast(e.message,'err');}
+    setLoading(false);
+  };
+  const startOral=async()=>{
+    if(!notes.trim()){showToast('Add notes first','err');return;}
+    setLoading(true);setLoadMsg('Preparing oral exam…');
+    try{const r=await safeAI(()=>callClaude(`You are an oral examiner. Based on these notes, greet student and ask FIRST question. One question only.\n\nNOTES:\n${notes.slice(0,2000)}`,'You are a rigorous but encouraging oral examiner.',null,apiKey));
+      setViva([{role:'examiner',text:r}]);setVivaIn('');setStudyTab('oral');setScreen('study');showToast('Oral exam started');
+    }catch(e){showToast(e.message,'err');}
+    setLoading(false);
+  };
+  const sendViva=async()=>{
+    if(!vivaIn.trim()||vivaLoading)return;
+    const ans=vivaIn.trim();setVivaIn('');
+    const nv=[...viva,{role:'student',text:ans}];setViva(nv);setVivaLoading(true);
+    try{
+      const qCount=nv.filter(m=>m.role==='examiner').length;
+      const hist=nv.map(m=>`${m.role==='examiner'?'Examiner':'Student'}: ${m.text}`).join('\n\n');
+      const r=await safeAI(()=>callClaude(`Context:\n${notes.slice(0,1500)}\n\nConversation:\n${hist}\n\n${qCount>=5?'Give 2-3 sentence final assessment with score out of 10.':'Evaluate briefly then ask NEXT follow-up question. Be encouraging.'}`,'You are an academic oral examiner.',null,apiKey));
+      setViva([...nv,{role:'examiner',text:r}]);
+    }catch(e){showToast(e.message,'err');}
+    setVivaLoading(false);
+  };
+  const submitQuiz=()=>{
+    if(!quiz)return;let s=0,t=0;
+    quiz.mcq?.forEach((q,i)=>{t++;if(answers[`m${i}`]===q.ans)s++;});
+    quiz.tf?.forEach((q,i)=>{t++;if(answers[`t${i}`]===q.ans)s++;});
+    const pct=t>0?Math.round((s/t)*100):0;
+    setScore({s,t,pct});setSubmitted(true);
+    updProg({quizScores:[...(todayProg.quizScores||[]),pct]});
+    showToast(pct>=70?`Score: ${pct}% ✦`:`Score: ${pct}% — keep going!`);
+  };
+  const completeTopic=()=>{setFocusOn(false);updProg({completed:true,topics:[...new Set([...(todayProg.topics||[]),topic||'Session'])]});setScreen('home');showToast(`"${topic||'Topic'}" completed ✿`);};
+  const startBreak=t=>{setBreakType(t);setBreakSec(0);setFocusOn(false);setScreen('break');};
+  const endBreak=()=>{setBreakType(null);setBreakSec(0);setScreen('focus');};
+
+  // ─── Guide ───
+  const guideLines={home:'This is your study dashboard ✿',notes:'Drop your material here ✦',study:'Cards, quizzes, oral practice!',calendar:'Track your study streak ✿',focus:'Start timer and stay focused ✦',break:'Rest — your memory needs space.',settings:'Customise your experience ✿'};
+  const guideAction={home:'wave',notes:'read',study:'read',calendar:'jump',focus:'coffee',break:'coffee',settings:'wave'};
+  const runGuide=(action,line,talk)=>{if(line)setGuideLine(line);setGuideState({action,talk});if(talk)setTimeout(()=>setGuideState(s=>({...s,talk:false})),3800);};
+  const goTo=id=>{runGuide(guideAction[id]||'wave',guideLines[id]||guideLines.home,true);if(id==='focus'){setScreen('focus');setFocusOn(true);}else setScreen(id);};
+
+  // ─── Draggable decorations ───
+  const addDeco=(emoji)=>{
+    const newDeco={id:Date.now(),emoji,x:Math.random()*60+20,y:Math.random()*50+20};
+    setDecorations(p=>[...p,newDeco]);
+  };
+  const removeDeco=id=>setDecorations(p=>p.filter(d=>d.id!==id));
+  const handleDecoMouseDown=(e,id)=>{
+    e.stopPropagation();
+    const rect=mainRef.current?.getBoundingClientRect();
+    if(!rect)return;
+    setDragging({id,startX:e.clientX,startY:e.clientY});
+  };
+  const handleDecoMouseMove=e=>{
+    if(!dragging||!mainRef.current)return;
+    const rect=mainRef.current.getBoundingClientRect();
+    const x=((e.clientX-rect.left)/rect.width)*100;
+    const y=((e.clientY-rect.top)/rect.height)*100;
+    setDecorations(p=>p.map(d=>d.id===dragging.id?{...d,x:Math.max(2,Math.min(95,x)),y:Math.max(2,Math.min(95,y))}:d));
+  };
+  const handleDecoMouseUp=()=>setDragging(null);
+
+  // ══════════════════════════
+  //  SCREENS
+  // ══════════════════════════
+
+  // ─── HOME ───
+  const HomeScreen=()=>{
+    const last7=Array.from({length:7},(_,i)=>{const d=new Date();d.setDate(d.getDate()-(6-i));const k=d.toISOString().slice(0,10);return{k,label:['S','M','T','W','T','F','S'][d.getDay()],min:progress[k]?.studyMin||0,isToday:k===today};});
+    const maxMin=Math.max(...last7.map(d=>d.min),1);
+    const pctStudy=Math.min(100,(todayProg.studyMin/60)*100);
+    return E('div',{className:'fade-up'},
+      E('div',{className:'page-header'},
+        E('h1',{},'Good '+(new Date().getHours()<12?'Morning':new Date().getHours()<18?'Afternoon':'Evening')+', '+(user.displayName||'Friend')+' ✿'),
+        E('p',{},new Date().toLocaleDateString('en-US',{weekday:'long',month:'long',day:'numeric'}))
+      ),
+      E('div',{style:{display:'grid',gridTemplateColumns:'repeat(3,1fr)',gap:8,marginBottom:10}},
+        [[pal.lav,icons.focus||'⏰',fmt(focusSec),'Study Time'],[pal.mint,icons.study||'📚',todayProg.cards||0,'Cards Done'],[pal.rose,icons.notes||'📝',avgQ>0?avgQ+'%':'-','Quiz Avg']]
+          .map(([p,ico,val,lbl])=>E('div',{key:lbl,className:'stat-card',style:{borderColor:p.mid}},
+            E('div',{className:'line-icon',style:{background:p.light,borderColor:p.mid}},ico),
+            E('div',{className:'stat-val',style:{color:p.dark,fontSize:16}},val),
+            E('div',{className:'stat-lbl'},lbl)
+          ))
+      ),
+      E('div',{style:{display:'grid',gridTemplateColumns:'auto 1fr',gap:10,marginBottom:10,alignItems:'start'}},
+        E('div',{className:'card',style:{padding:'11px',textAlign:'center',minWidth:128}},
+          E('svg',{width:96,height:96,viewBox:'0 0 120 120',style:{margin:'0 auto',display:'block'}},
+            [56,42,28].map((r,i)=>{const cols=[pal.lav.dark,pal.mint.dark,pal.rose.dark];const pcts=[pctStudy,Math.min(100,((todayProg.cards||0)/20)*100),avgQ];const c=2*Math.PI*r;
+              return E('g',{key:r},E('circle',{cx:60,cy:60,r,fill:'none',stroke:[pal.lav.light,pal.mint.light,pal.rose.light][i],strokeWidth:9}),E('circle',{cx:60,cy:60,r,fill:'none',stroke:cols[i],strokeWidth:9,strokeDasharray:c,strokeDashoffset:c*(1-pcts[i]/100),strokeLinecap:'round',transform:'rotate(-90 60 60)',style:{transition:'stroke-dashoffset 1s ease'}}));
+            }),
+            E('text',{x:60,y:54,textAnchor:'middle',fontFamily:'var(--pfont)',fontSize:15,fill:'var(--tx)'},Math.round(pctStudy)),
+            E('text',{x:60,y:67,textAnchor:'middle',fontFamily:'var(--bfont)',fontSize:9,fill:'var(--mu)'},'% goal')
+          ),
+          [[pal.lav,'Study'],[pal.mint,'Cards'],[pal.rose,'Quiz']].map(([p,l])=>
+            E('div',{key:l,style:{display:'flex',alignItems:'center',gap:5,justifyContent:'center'}},E('div',{style:{width:7,height:7,borderRadius:'50%',background:p.dark}}),E('span',{style:{fontSize:10,color:'var(--mu)',fontFamily:'var(--bfont)'}},l))
+          )
+        ),
+        E('div',{className:'card'},
+          E('div',{style:{fontSize:10,fontFamily:'var(--pfont)',color:'var(--tx)',marginBottom:3}},'Weekly Study'),
+          E('div',{style:{fontSize:11,color:'var(--mu)',marginBottom:12,fontWeight:700}},last7.reduce((a,b)=>a+b.min,0)+' min this week'),
+          E('div',{style:{display:'flex',alignItems:'flex-end',gap:4,height:54}},
+            last7.map((d,i)=>E('div',{key:i,style:{flex:1,display:'flex',flexDirection:'column',alignItems:'center',gap:3}},
+              E('div',{style:{width:'100%',height:Math.max(3,(d.min/maxMin)*52),background:d.isToday?pal.lav.dark:pal.lav.light,borderRadius:'4px 4px 0 0',transition:'height .5s'}}),
+              E('div',{style:{fontSize:9,fontWeight:d.isToday?800:600,color:d.isToday?pal.lav.dark:'var(--mu)',fontFamily:'var(--bfont)'}},d.label)
+            ))
+          )
+        )
+      ),
+      E('div',{className:'card',style:{marginBottom:10}},
+        E('div',{style:{fontSize:8,fontFamily:'var(--pfont)',color:pal.lav.dark,letterSpacing:.8,marginBottom:7}},'Daily Study Note ✦'),
+        E('p',{style:{fontSize:12,fontFamily:'var(--bfont)',fontWeight:700,color:'var(--tx)',lineHeight:1.55}},dailyTip||'Loading tip…')
+      ),
+      E('div',{},
+        E('div',{style:{fontSize:10,fontFamily:'var(--pfont)',color:'var(--tx)',marginBottom:9}},'Quick Start'),
+        E('div',{className:'quick-grid',style:{display:'grid',gridTemplateColumns:'repeat(2,1fr)',gap:8}},
+          [{emoji:icons.notes||'📝',label:'Upload Notes',sub:'PDF, DOCX, PPTX, URL',pal:pal.lav,act:()=>goTo('notes')},
+           {emoji:icons.study||'📚',label:'Flashcards',sub:'AI review set',pal:pal.mint,act:()=>{if(cards.length>0){setStudyTab('cards');goTo('study');}else{goTo('notes');showToast('Upload notes first');}}},
+           {emoji:icons.calendar||'📅',label:'Quiz',sub:diff+' difficulty',pal:pal.peach,act:()=>{if(quiz){setStudyTab('quiz');goTo('study');}else{goTo('notes');showToast('Upload notes first');}}},
+           {emoji:'🎤',label:'Oral Exam',sub:'Voice practice',pal:pal.rose,act:()=>{if(viva.length>0){setStudyTab('oral');goTo('study');}else{goTo('notes');showToast('Upload notes first');}}}
+          ].map((a,i)=>E('button',{key:i,onClick:a.act,
+            style:{background:a.pal.light,border:`2px solid ${a.pal.mid}`,borderRadius:12,padding:'12px',cursor:'pointer',display:'flex',alignItems:'center',gap:10,textAlign:'left',transition:'all .2s',width:'100%'},
+            onMouseOver:ev=>{ev.currentTarget.style.transform='translateY(-2px)';ev.currentTarget.style.boxShadow=`0 5px 18px ${a.pal.mid}50`},
+            onMouseOut:ev=>{ev.currentTarget.style.transform='';ev.currentTarget.style.boxShadow=''}},
+            E('div',{style:{width:48,height:48,background:'var(--card)',borderRadius:10,display:'flex',alignItems:'center',justifyContent:'center',fontSize:22,border:`1px solid ${a.pal.mid}`,flexShrink:0}},a.emoji),
+            E('div',{},E('div',{style:{fontSize:10,fontFamily:'var(--pfont)',color:a.pal.text,letterSpacing:'.2px',marginBottom:2}},a.label),E('div',{style:{fontSize:11,color:'var(--mu)',fontWeight:600}},a.sub))
+          ))
+        )
+      )
+    );
+  };
+
+  // ─── NOTES ───
+  const NotesScreen=()=>E('div',{className:'fade-up'},
+    E('div',{className:'page-header'},E('h1',{},(icons.notes||'📝')+' Study Notes'),E('p',{},'Upload or paste your study material')),
+    E('div',{style:{marginBottom:10}},E('label',{style:{fontSize:8,fontFamily:'var(--pfont)',color:'var(--mu)',display:'block',marginBottom:5}},'Topic Name'),E('input',{type:'text',placeholder:'e.g. Chapter 4 — Cell Biology',value:topic,onChange:ev=>setTopic(ev.target.value)})),
+    E('div',{className:'upload-zone',onClick:()=>document.getElementById('sb-file').click(),style:{marginBottom:10}},
+      E('div',{style:{fontSize:28,marginBottom:6}},(icons.notes||'📝')),
+      E('div',{style:{fontSize:10,fontFamily:'var(--pfont)',color:'var(--pk3)',marginBottom:3}},'Upload Files'),
+      E('div',{style:{fontSize:11,color:'var(--mu)',fontWeight:600}},'PDF · Word (.docx) · PowerPoint · Text'),
+      E('input',{id:'sb-file',type:'file',accept:'.txt,.pdf,.docx,.pptx,.md',onChange:ev=>handleFile(ev.target.files[0])})
+    ),
+    E('div',{style:{display:'flex',gap:8,marginBottom:10}},
+      E('input',{type:'url',placeholder:'Paste URL to fetch content...',value:urlIn,onChange:ev=>setUrlIn(ev.target.value),onKeyDown:ev=>{if(ev.key==='Enter')handleURL();}}),
+      E('button',{className:'btn btn-primary btn-sm',onClick:handleURL,style:{flexShrink:0}},'Fetch')
+    ),
+    uploadedSrc.length>0&&E('div',{style:{marginBottom:10}},
+      E('div',{style:{fontSize:9,color:'var(--mu)',fontFamily:'var(--pfont)',marginBottom:5}},'Loaded Sources'),
+      E('div',{style:{display:'flex',flexWrap:'wrap',gap:5}},
+        uploadedSrc.map((s,i)=>E('div',{key:i,className:'chip chip-mint'},s.type,' ',s.name,
+          E('button',{onClick:()=>setUploadedSrc(p=>p.filter((_,j)=>j!==i)),style:{background:'none',border:'none',padding:'0 0 0 3px',color:'var(--mint3)',fontSize:12,fontWeight:900,lineHeight:1}},'×')
+        ))
+      )
+    ),
+    E('div',{style:{marginBottom:12}},E('label',{style:{fontSize:9,fontFamily:'var(--pfont)',color:'var(--mu)',display:'block',marginBottom:5}},'Paste Notes Here'),
+      E('textarea',{rows:5,placeholder:'Paste notes, lecture content, textbook passages…',value:notes,onChange:ev=>setNotes(ev.target.value)}),
+      notes&&E('div',{style:{fontSize:10,color:'var(--mu)',textAlign:'right',marginTop:3,fontFamily:'var(--bfont)'}},`${notes.length} chars`)
+    ),
+    E('div',{style:{marginBottom:14}},
+      E('label',{style:{fontSize:9,fontFamily:'var(--pfont)',color:'var(--mu)',display:'block',marginBottom:6}},'Quiz Difficulty'),
+      E('div',{style:{display:'flex',gap:7}},
+        [['easy','Easy',pal.mint],['medium','Medium',pal.peach],['hard','Hard',pal.rose]].map(([d,l,p])=>
+          E('button',{key:d,onClick:()=>setDiff(d),style:{flex:1,padding:'8px',borderRadius:50,border:`2px solid ${diff===d?p.dark:p.mid}`,background:diff===d?p.light:'var(--card)',color:diff===d?p.dark:'var(--mu)',fontSize:9,fontFamily:'var(--pfont)',transition:'all .18s'}},l)
+        )
+      )
+    ),
+    E('div',{style:{display:'grid',gridTemplateColumns:'1fr 1fr',gap:8}},
+      [['📚','Flashcards','btn-primary',genCards],[icons.calendar||'📅','Quiz','btn-peach',genQuiz],['🎤','Oral Exam','btn-rose',startOral]]
+        .map(([ico,lbl,cls,act],i)=>E('button',{key:i,className:`btn ${cls} btn-block`,onClick:act,style:{gridColumn:lbl==='Oral Exam'?'span 2':'span 1',padding:'11px',justifyContent:'center'}},ico,lbl))
+    )
+  );
+
+  // ─── STUDY ───
+  const StudyScreen=()=>{
+    const CardsView=()=>{
+      if(!cards.length)return E('div',{className:'empty-state'},E('div',{style:{fontSize:40,marginBottom:12}},'📚'),E('p',{style:{color:'var(--mu)',marginBottom:16,fontFamily:'var(--bfont)'}},'No flashcards yet!'),E('button',{className:'btn btn-primary',onClick:()=>setScreen('notes')},'Upload Notes'));
+      const card=cards[cardIdx];
+      return E('div',{},
+        E('div',{style:{display:'flex',alignItems:'center',gap:8,marginBottom:9}},E('div',{className:'pbar-wrap',style:{flex:1}},E('div',{className:'pbar',style:{width:`${((cardIdx+1)/cards.length)*100}%`}})),E('span',{style:{fontSize:9,fontFamily:'var(--pfont)',color:'var(--mu)',flexShrink:0}},`${cardIdx+1}/${cards.length}`)),
+        card?.tag&&E('div',{style:{textAlign:'center',marginBottom:7}},E('span',{className:'chip chip-lav'},card.tag)),
+        E('div',{className:'flip-scene',onClick:()=>setFlipped(f=>!f)},
+          E('div',{className:`flip-card${flipped?' flipped':''}`},
+            E('div',{className:'flip-front'},E('div',{style:{fontSize:8,fontFamily:'var(--pfont)',color:'var(--mu)',marginBottom:12,letterSpacing:1}},'TAP TO REVEAL'),E('p',{style:{fontSize:15,fontWeight:600,color:'var(--tx)',lineHeight:1.6,fontFamily:'var(--bfont)'}},card.front)),
+            E('div',{className:'flip-back'},E('div',{style:{fontSize:8,fontFamily:'var(--pfont)',color:'var(--pk3)',marginBottom:10,letterSpacing:1}},'ANSWER'),E('p',{style:{fontSize:14,fontFamily:'var(--bfont)',fontWeight:700,color:'var(--tx)',lineHeight:1.5}},card.back))
+          )
+        ),
+        E('div',{style:{display:'flex',gap:8,marginBottom:9}},
+          E('button',{onClick:()=>{setCardIdx(i=>Math.max(0,i-1));setFlipped(false);},disabled:cardIdx===0,className:'btn btn-outline',style:{flex:1,opacity:cardIdx===0?.4:1}},'Prev'),
+          E('button',{onClick:()=>{setFlipped(false);if(cardIdx<cards.length-1)setCardIdx(i=>i+1);else completeTopic();},className:'btn btn-primary',style:{flex:1.5}},cardIdx<cards.length-1?'Next ›':'Complete ✿')
+        ),
+        E('div',{style:{display:'flex',gap:7}},
+          [['Hard',pal.rose],['Okay',pal.peach],['Easy',pal.mint]].map(([l,p],i)=>E('button',{key:i,onClick:()=>setCardRatings(prev=>({...prev,[cardIdx]:l})),style:{flex:1,background:cardRatings[cardIdx]===l?p.light:'var(--card)',border:`2px solid ${cardRatings[cardIdx]===l?p.dark:p.mid}`,borderRadius:9,padding:'8px',fontSize:9,fontFamily:'var(--pfont)',color:cardRatings[cardIdx]===l?p.dark:'var(--mu)',transition:'all .18s'}},l))
+        )
+      );
+    };
+    const QuizView=()=>{
+      if(!quiz)return E('div',{className:'empty-state'},E('div',{style:{fontSize:40,marginBottom:12}},'🧠'),E('p',{style:{color:'var(--mu)',marginBottom:16,fontFamily:'var(--bfont)'}},'No quiz yet!'),E('button',{className:'btn btn-primary',onClick:()=>setScreen('notes')},'Upload Notes'));
+      return E('div',{},
+        score&&E('div',{style:{background:score.pct>=70?pal.mint.light:pal.rose.light,border:`2px solid ${score.pct>=70?pal.mint.mid:pal.rose.mid}`,borderRadius:14,padding:'12px 16px',marginBottom:12,textAlign:'center'}},
+          E('div',{style:{fontFamily:'var(--pfont)',fontSize:22,color:score.pct>=70?pal.mint.dark:pal.rose.dark}},`${score.s}/${score.t}`),
+          E('div',{style:{fontSize:11,color:'var(--mu)',marginTop:2,fontFamily:'var(--bfont)',fontWeight:700}},score.pct>=90?'Outstanding ✦':score.pct>=70?'Great work ✿':'Keep practising')
+        ),
+        E('div',{style:{display:'flex',gap:6,marginBottom:12,flexWrap:'wrap'}},
+          [['mcq','MCQ'],['tf','True/False'],['short','Short Qs']].map(([k,l])=>E('button',{key:k,onClick:()=>setQtab(k),style:{padding:'7px 14px',borderRadius:50,border:`2px solid ${qtab===k?pal.lav.dark:pal.lav.mid}`,fontSize:8,fontFamily:'var(--pfont)',background:qtab===k?pal.lav.dark:'var(--card)',color:qtab===k?'white':'var(--mu)',transition:'all .18s'}},l))
+        ),
+        E('div',{style:{display:'flex',flexDirection:'column',gap:10}},
+          qtab==='mcq'&&quiz.mcq?.map((q,i)=>E('div',{key:i,className:'card-sm'},
+            E('div',{style:{fontSize:8,fontFamily:'var(--pfont)',color:pal.lav.dark,marginBottom:5,letterSpacing:.7}},`Q${i+1}`),
+            E('p',{style:{fontSize:13,fontWeight:600,color:'var(--tx)',marginBottom:8,lineHeight:1.5,fontFamily:'var(--bfont)'}},q.q),
+            q.opts.map((op,oi)=>{let cls='q-opt';if(submitted){if(oi===q.ans)cls+=' cor';else if(answers[`m${i}`]===oi)cls+=' wrg';}else if(answers[`m${i}`]===oi)cls+=' sel';
+              return E('button',{key:oi,className:cls,onClick:()=>!submitted&&setAnswers(a=>({...a,[`m${i}`]:oi}))},E('span',{style:{fontWeight:800,marginRight:7,color:'var(--mu)'}},'ABCD'[oi]+'.'),op);
+            }),
+            submitted&&q.exp&&E('div',{style:{background:pal.lav.light,borderRadius:7,padding:'7px 10px',marginTop:3}},E('span',{style:{fontSize:11,color:pal.lav.dark,fontFamily:'var(--bfont)'}},`Note: ${q.exp}`))
+          )),
+          qtab==='tf'&&quiz.tf?.map((q,i)=>E('div',{key:i,className:'card-sm'},
+            E('p',{style:{fontSize:13,fontWeight:600,color:'var(--tx)',marginBottom:8,lineHeight:1.5,fontFamily:'var(--bfont)'}},q.q),
+            E('div',{style:{display:'flex',gap:7}},
+              [true,false].map(v=>{let bg='var(--card)',bc=pal.lav.mid,col='var(--mu)';if(submitted){if(v===q.ans){bg=pal.mint.light;bc=pal.mint.dark;col=pal.mint.dark;}else if(answers[`t${i}`]===v){bg=pal.rose.light;bc=pal.rose.dark;col=pal.rose.dark;}}else if(answers[`t${i}`]===v){bg=pal.lav.light;bc=pal.lav.dark;col=pal.lav.dark;}
+                return E('button',{key:String(v),onClick:()=>!submitted&&setAnswers(a=>({...a,[`t${i}`]:v})),style:{flex:1,background:bg,border:`2px solid ${bc}`,borderRadius:9,padding:'10px',fontSize:11,fontFamily:'var(--pfont)',color:col,letterSpacing:'.3px'}},v?'True':'False');
+              })
+            ),
+            submitted&&q.exp&&E('div',{style:{background:pal.mint.light,borderRadius:7,padding:'7px 10px',marginTop:6}},E('span',{style:{fontSize:11,color:pal.mint.dark,fontFamily:'var(--bfont)'}},`Note: ${q.exp}`))
+          )),
+          qtab==='short'&&quiz.short?.map((q,i)=>E('div',{key:i,className:'card-sm'},
+            E('p',{style:{fontSize:13,fontWeight:600,color:'var(--tx)',marginBottom:8,lineHeight:1.5,fontFamily:'var(--bfont)'}},q.q),
+            submitted?E('div',{style:{background:pal.peach.light,border:`2px solid ${pal.peach.mid}`,borderRadius:9,padding:'10px'}},E('div',{style:{fontSize:8,fontFamily:'var(--pfont)',color:pal.peach.dark,marginBottom:3}},'Model Answer'),E('p',{style:{fontSize:12,color:'var(--tx)',lineHeight:1.5,fontFamily:'var(--bfont)'}},q.ans)):
+            E('textarea',{rows:2,placeholder:'Your answer…',value:answers[`s${i}`]||'',onChange:ev=>setAnswers(a=>({...a,[`s${i}`]:ev.target.value}))})
+          ))
+        ),
+        !submitted&&E('button',{className:'btn btn-primary btn-block',onClick:submitQuiz,style:{marginTop:12,padding:'12px'}},'Submit Quiz'),
+        submitted&&E('div',{style:{display:'flex',gap:8,marginTop:12}},E('button',{className:'btn btn-outline',onClick:()=>{setAnswers({});setSubmitted(false);setScore(null);},style:{flex:1}},'Retry'),E('button',{className:'btn btn-mint',onClick:completeTopic,style:{flex:1}},'Complete ✿'))
+      );
+    };
+    const OralView=()=>E('div',{},
+      E('div',{style:{background:pal.rose.light,border:`2px solid ${pal.rose.mid}`,borderRadius:11,padding:'9px 12px',marginBottom:12}},E('div',{style:{fontSize:9,fontFamily:'var(--pfont)',color:pal.rose.dark}},`AI Oral Examiner — ${viva.filter(m=>m.role==='examiner').length} questions`)),
+      viva.length===0&&E('div',{className:'empty-state'},E('div',{style:{fontSize:40,marginBottom:12}},'🎤'),E('p',{style:{color:'var(--mu)',marginBottom:16,fontFamily:'var(--bfont)'}},'Upload notes then start.'),E('button',{className:'btn btn-rose',onClick:()=>setScreen('notes')},'Upload Notes')),
+      viva.length>0&&E('div',{},
+        E('div',{ref:vivaRef,style:{maxHeight:290,overflowY:'auto',display:'flex',flexDirection:'column',gap:9,marginBottom:12,padding:'3px 0'}},
+          viva.map((msg,i)=>E('div',{key:i,className:msg.role==='examiner'?'chat-ex':'chat-st'},E('div',{className:'chat-role',style:{color:msg.role==='examiner'?pal.rose.dark:pal.lav.dark}},msg.role==='examiner'?'Examiner ✦':'You'),E('div',{className:'chat-text'},msg.text))),
+          vivaLoading&&E('div',{className:'chat-ex'},E('div',{className:'chat-role',style:{color:pal.rose.dark}},'Examiner ✦'),E('div',{style:{display:'flex',gap:4}},[0,1,2].map(i=>E('div',{key:i,style:{width:6,height:6,borderRadius:'50%',background:pal.rose.mid,animation:`bounce .7s ${i*.2}s ease-in-out infinite alternate`}}))))
+        ),
+        E('div',{style:{display:'flex',gap:8}},
+          E('textarea',{rows:2,placeholder:'Type your answer… (Enter to send)',value:vivaIn,onChange:ev=>setVivaIn(ev.target.value),onKeyDown:ev=>{if(ev.key==='Enter'&&!ev.shiftKey){ev.preventDefault();sendViva();}}}),
+          E('button',{onClick:sendViva,disabled:vivaLoading||!vivaIn.trim(),style:{background:pal.rose.dark,color:'white',border:'none',borderRadius:10,width:44,fontSize:18,flexShrink:0,opacity:(vivaLoading||!vivaIn.trim())?0.4:1}},'↑')
+        ),
+        E('button',{onClick:completeTopic,style:{background:'none',border:'none',fontSize:12,fontWeight:700,color:pal.mint.dark,textDecoration:'underline',width:'100%',marginTop:8,textAlign:'center',fontFamily:'var(--bfont)'}},'End Exam & Save')
+      )
+    );
+    return E('div',{className:'fade-up'},
+      E('div',{className:'page-header'},E('h1',{},icons.study||'📚',' Study Mode'),E('p',{},'Flashcards, Quiz & Oral Exam')),
+      E('div',{style:{display:'flex',gap:7,marginBottom:14}},
+        [['cards','Cards ✦'],['quiz','Quiz'],['oral','Oral']].map(([tab,lbl])=>E('button',{key:tab,onClick:()=>setStudyTab(tab),style:{padding:'8px 16px',borderRadius:50,border:`2px solid ${studyTab===tab?pal.lav.dark:pal.lav.mid}`,fontSize:8,fontFamily:'var(--pfont)',background:studyTab===tab?pal.lav.dark:'var(--card)',color:studyTab===tab?'white':'var(--mu)',transition:'all .2s',letterSpacing:'.3px',whiteSpace:'nowrap'}},lbl))
+      ),
+      studyTab==='cards'&&E(CardsView,{}),
+      studyTab==='quiz'&&E(QuizView,{}),
+      studyTab==='oral'&&E(OralView,{})
+    );
+  };
+
+  // ─── CALENDAR (FIXED: compact to fit all rows) ───
+  const CalScreen=()=>{
+    const yr=calDate.getFullYear(),mo=calDate.getMonth();
+    const firstDay=new Date(yr,mo,1).getDay();
+    const daysInMonth=new Date(yr,mo+1,0).getDate();
+    const calRows=Math.ceil((firstDay+daysInMonth)/7);
+    // Dynamic cell height so all rows fit
+    const cellH=calRows>=6?28:calRows===5?32:38;
+    const monthLabel=calDate.toLocaleDateString('en-US',{month:'long',year:'numeric'});
+    const mkKey=d=>`${yr}-${String(mo+1).padStart(2,'0')}-${String(d).padStart(2,'0')}`;
+    const dotCol=p=>{if(!p)return null;if(p.note&&!p.deleted)return pal.rose.dark;if(p.completed)return pal.mint.dark;if((progress[mkKey(0)]?.studyMin||0)>=30)return pal.lav.dark;return null;};
+    const selKey=selDay?mkKey(selDay):null;
+    const selCal=selKey?(calNotes[selKey]||{}):null;
+    const todayNote=selCal||{note:'',completed:false,deleted:false};
+    return E('div',{className:'fade-up'},
+      E('div',{className:'page-header'},E('h1',{},(icons.calendar||'📅')+' Calendar'),E('p',{},'Track daily progress & notes')),
+      E('div',{className:'card',style:{marginBottom:10,padding:'10px'}},
+        // Month nav
+        E('div',{style:{display:'flex',alignItems:'center',gap:8,marginBottom:8}},
+          E('button',{className:'back-btn',style:{width:28,height:28},onClick:()=>{setCalDate(d=>{const n=new Date(d);n.setMonth(n.getMonth()-1);return n;});setSelDay(null);}},'‹'),
+          E('h3',{style:{fontFamily:'var(--pfont)',fontSize:10,color:'var(--tx)',flex:1,textAlign:'center',letterSpacing:'.4px'}},monthLabel),
+          E('button',{className:'back-btn',style:{width:28,height:28},onClick:()=>{setCalDate(d=>{const n=new Date(d);n.setMonth(n.getMonth()+1);return n;});setSelDay(null);}},'›')
+        ),
+        // Day labels
+        E('div',{className:'cal-grid',style:{marginBottom:3}},
+          ['Su','Mo','Tu','We','Th','Fr','Sa'].map(d=>E('div',{key:d,style:{textAlign:'center',fontSize:9,fontWeight:700,color:'var(--mu)',padding:'2px 0'}},'d'))
+        ),
+        // Cells grid
+        E('div',{className:'cal-grid'},
+          Array.from({length:firstDay}).map((_,i)=>E('div',{key:`e${i}`})),
+          Array.from({length:daysInMonth},(_,i)=>{
+            const d=i+1,k=mkKey(d);
+            const cn=calNotes[k];const pr=progress[k];
+            let dot=null;
+            if(cn&&cn.note&&!cn.deleted)dot=cn.completed?pal.mint.dark:pal.rose.dark;
+            else if(pr?.completed)dot=pal.mint.dark;
+            else if(pr?.studyMin>=30)dot=pal.lav.dark;
+            else if(pr?.studyMin>0||pr?.cards>0)dot=pal.peach.dark;
+            const isToday=k===today,isSel=selDay===d;
+            return E('button',{key:d,onClick:()=>setSelDay(isSel?null:d),className:`cal-cell${isToday?' today':''}${isSel?' selected':''}`,style:{height:cellH,position:'relative'}},
+              cn?.note&&!cn?.deleted&&E('span',{className:'cal-pin'}),
+              cn?.completed&&E('span',{style:{position:'absolute',top:1,left:2,fontSize:8,color:pal.mint.dark}},'✓'),
+              E('span',{className:'cal-num',style:{textDecoration:cn?.deleted?'line-through':'none',opacity:cn?.deleted?.5:1}},d),
+              dot?E('div',{className:'cal-dot',style:{background:isSel?'rgba(255,255,255,.7)':dot}}):E('div',{className:'cal-dot'})
+            );
+          })
+        ),
+        // Compact legend
+        E('div',{style:{display:'flex',gap:8,marginTop:8,justifyContent:'center',flexWrap:'wrap'}},
+          [[pal.rose.dark,'Note'],[pal.mint.dark,'Done'],[pal.lav.dark,'30+ min'],[pal.peach.dark,'Studied']].map(([col,lbl])=>
+            E('div',{key:lbl,style:{display:'flex',alignItems:'center',gap:3}},E('div',{style:{width:6,height:6,borderRadius:'50%',background:col}}),E('span',{style:{fontSize:9,color:'var(--mu)',fontWeight:700}},lbl))
+          )
+        )
+      ),
+      // Selected day detail
+      selDay&&E('div',{className:'card pop-in',style:{background:`linear-gradient(135deg,${pal.lav.light},${pal.sky.light})`,borderColor:pal.lav.mid,padding:'11px'}},
+        E('div',{style:{fontFamily:'var(--pfont)',fontSize:10,color:'var(--tx)',marginBottom:10}},`${calDate.toLocaleDateString('en-US',{month:'long'})} ${selDay}, ${yr}`),
+        E('div',{style:{display:'grid',gridTemplateColumns:'repeat(4,1fr)',gap:6,marginBottom:10}},
+          [[icons.focus||'⏰','Study',(progress[selKey]?.studyMin||0)+'m',pal.lav],
+           [icons.study||'📚','Cards',progress[selKey]?.cards||0,pal.mint],
+           ['🎯','Quiz',progress[selKey]?.quizScores?.length>0?Math.round(progress[selKey].quizScores.reduce((a,b)=>a+b,0)/progress[selKey].quizScores.length)+'%':'-',pal.peach],
+           ['✓','Done',progress[selKey]?.completed?'Yes':'No',pal.sky]]
+            .map(([ico,lbl,val,p])=>E('div',{key:lbl,style:{background:p.light,border:`2px solid ${p.mid}`,borderRadius:9,padding:'8px 4px',textAlign:'center'}},
+              E('div',{style:{fontSize:16,marginBottom:3}},ico),E('div',{style:{fontSize:11,fontFamily:'var(--pfont)',color:p.dark}},val),E('div',{style:{fontSize:9,color:'var(--mu)',fontWeight:700}},lbl)
+            ))
+        ),
+        // Note area with actions
+        E('label',{style:{display:'block',fontSize:8,fontFamily:'var(--pfont)',color:'var(--mu)',marginBottom:4}},'Note'),
+        todayNote.completed
+          ?E('div',{style:{padding:'8px 10px',background:'var(--mint-lt)',border:'2px solid var(--mint2)',borderRadius:'var(--rs)',fontSize:12,fontFamily:'var(--bfont)',color:'var(--mint3)',textDecoration:'line-through',marginBottom:6}},todayNote.note||'(no note)')
+          :todayNote.deleted
+          ?E('div',{style:{padding:'8px 10px',background:'var(--rose-lt)',border:'2px solid var(--rose2)',borderRadius:'var(--rs)',fontSize:12,fontFamily:'var(--bfont)',color:'var(--rose3)',textDecoration:'line-through',marginBottom:6,opacity:.6}},todayNote.note||'(deleted)')
+          :E('textarea',{rows:2,placeholder:'Add a note for this date...',value:todayNote.note||'',onChange:ev=>updCalNote(selKey,{note:ev.target.value})}),
+        // Note action buttons
+        E('div',{style:{display:'flex',gap:6,marginTop:6}},
+          !todayNote.deleted&&E('button',{onClick:()=>updCalNote(selKey,{completed:!todayNote.completed,deleted:false}),style:{padding:'5px 10px',borderRadius:50,border:`2px solid ${todayNote.completed?pal.mint.dark:pal.mint.mid}`,background:todayNote.completed?pal.mint.light:'var(--card)',color:todayNote.completed?pal.mint.dark:'var(--mu)',fontSize:10,fontWeight:700,transition:'all .15s',cursor:'pointer'}},todayNote.completed?'✓ Done':'Mark Done'),
+          E('button',{onClick:()=>updCalNote(selKey,{deleted:!todayNote.deleted,completed:false}),style:{padding:'5px 10px',borderRadius:50,border:`2px solid ${todayNote.deleted?pal.rose.dark:pal.rose.mid}`,background:todayNote.deleted?pal.rose.light:'var(--card)',color:todayNote.deleted?pal.rose.dark:'var(--mu)',fontSize:10,fontWeight:700,transition:'all .15s',cursor:'pointer'}},todayNote.deleted?'↩ Restore':'🗑 Delete'),
+          !todayNote.deleted&&E('button',{onClick:()=>updCalNote(selKey,{note:'',completed:false}),style:{padding:'5px 10px',borderRadius:50,border:'2px solid var(--bd)',background:'var(--card)',color:'var(--mu)',fontSize:10,fontWeight:700,cursor:'pointer'}},'Clear Note')
+        ),
+        progress[selKey]?.topics?.length>0&&E('div',{style:{marginTop:8}},
+          E('div',{style:{fontSize:8,fontFamily:'var(--pfont)',color:'var(--mu)',marginBottom:5}},'Topics'),
+          E('div',{style:{display:'flex',flexWrap:'wrap',gap:5}},progress[selKey].topics.map((t,i)=>E('span',{key:i,className:'chip chip-lav'},t)))
+        )
+      )
+    );
+  };
+
+  // ─── FOCUS ───
+  const FocusScreen=()=>E('div',{className:'fade-up'},
+    E('div',{className:'page-header'},E('h1',{},(icons.focus||'⏰')+' Focus Timer'),E('p',{},'Deep work mode')),
+    E('div',{className:'card',style:{textAlign:'center',marginBottom:10,padding:'18px'}},
+      E('div',{style:{fontSize:38,marginBottom:8}},(icons.focus||'⏰')),
+      E('div',{style:{fontFamily:'var(--pfont)',fontSize:38,lineHeight:1,color:'var(--tx)',minWidth:180,letterSpacing:1}},fmt(focusSec)),
+      E('div',{style:{fontSize:9,fontFamily:'var(--pfont)',color:focusOn?pal.mint.dark:'var(--mu)',marginTop:5,letterSpacing:'.5px'}},focusOn?'ACTIVE ✦':'PAUSED'),
+      E('div',{style:{fontSize:11,color:'var(--mu)',marginTop:3,fontFamily:'var(--bfont)',fontWeight:700}},topic||'Focus Session')
+    ),
+    E('div',{style:{display:'flex',gap:8,marginBottom:10}},
+      E('button',{className:`btn btn-block ${focusOn?'btn-rose':'btn-primary'}`,onClick:()=>setFocusOn(f=>!f),style:{flex:2,padding:'11px'}},focusOn?'Pause':'Start'),
+      E('button',{className:'btn btn-outline btn-block',onClick:()=>{setFocusSec(0);setFocusOn(false);},style:{flex:1,padding:'11px'}},'Reset')
+    ),
+    E('div',{style:{fontSize:9,fontFamily:'var(--pfont)',color:'var(--mu)',marginBottom:8}},'Take a Break'),
+    E('div',{style:{display:'grid',gridTemplateColumns:'repeat(3,1fr)',gap:8,marginBottom:10}},
+      [['☕','Food',pal.peach,'food'],['🚶','Walk',pal.lav,'shop'],['💤','Rest',pal.mint,'rest']].map(([ico,l,p,t])=>
+        E('button',{key:t,onClick:()=>startBreak(t),style:{background:p.light,border:`2px solid ${p.mid}`,borderRadius:11,padding:'8px 4px',display:'flex',flexDirection:'column',alignItems:'center',gap:4,transition:'all .2s'},onMouseOver:ev=>ev.currentTarget.style.transform='translateY(-2px)',onMouseOut:ev=>ev.currentTarget.style.transform=''},
+          E('div',{style:{fontSize:22}},ico),E('span',{style:{fontSize:9,fontFamily:'var(--pfont)',color:p.dark}},l)
+        )
+      )
+    ),
+      E('div',{className:'card'},
+        E('div',{style:{fontSize:9,fontFamily:'var(--pfont)',color:'var(--mu)',marginBottom:9}},"Today's Stats"),
+      E('div',{style:{display:'grid',gridTemplateColumns:'repeat(3,1fr)',gap:8}},
+        [['⏰',fmt(focusSec),'Time'],['📚',todayProg.cards||0,'Cards'],['🎯',avgQ>0?avgQ+'%':'-','Quiz']]
+          .map(([ico,val,lbl])=>E('div',{key:lbl,style:{textAlign:'center'}},E('div',{style:{fontSize:20,marginBottom:4}},ico),E('div',{style:{fontFamily:'var(--pfont)',fontSize:14,color:'var(--tx)'}},val),E('div',{style:{fontSize:9,color:'var(--mu)',fontWeight:700}},lbl)))
+      )
+    )
+  );
+
+  // ─── BREAK ───
+  const BreakScreen=()=>{
+    const bInfo={food:{emoji:'☕',label:'Food Break',pal:pal.peach,msg:'Glucose restores cognitive function. Eat well!'},shop:{emoji:'🚶',label:'Walk Break',pal:pal.lav,msg:'Movement boosts BDNF — enhancing memory consolidation.'},rest:{emoji:'💤',label:'Rest Break',pal:pal.mint,msg:'Rest lets your hippocampus consolidate memories.'}};
+    if(!breakType)return E('div',{className:'fade-up'},E('div',{className:'page-header'},E('h1',{},'☁️ Take a Break'),E('p',{},'Strategic rest improves retention')),E('div',{style:{display:'flex',flexDirection:'column',gap:10}},Object.entries(bInfo).map(([type,info])=>E('button',{key:type,onClick:()=>startBreak(type),style:{background:info.pal.light,border:`2px solid ${info.pal.mid}`,borderRadius:16,padding:'16px',display:'flex',alignItems:'center',gap:12,transition:'all .2s'},onMouseOver:ev=>ev.currentTarget.style.transform='translateY(-2px)',onMouseOut:ev=>ev.currentTarget.style.transform=''},E('div',{style:{fontSize:30}},info.emoji),E('div',{},E('div',{style:{fontSize:10,fontFamily:'var(--pfont)',color:info.pal.dark,marginBottom:3}},info.label),E('div',{style:{fontSize:11,color:'var(--mu)',lineHeight:1.5,fontFamily:'var(--bfont)',fontWeight:600}},info.msg))))));
+    const info=bInfo[breakType];
+    return E('div',{className:'fade-up',style:{textAlign:'center',padding:'20px 16px'}},
+      E('div',{style:{fontSize:52,marginBottom:10,animation:'float 2s ease-in-out infinite'}},info.emoji),
+      E('div',{style:{fontFamily:'var(--pfont)',fontSize:36,color:info.pal.dark,marginBottom:8}},fmt(breakSec)),
+      E('div',{style:{color:'var(--mu)',fontSize:12,marginBottom:20,fontFamily:'var(--bfont)',fontWeight:700}},'Break in progress…'),
+      E('div',{style:{background:info.pal.light,borderRadius:16,padding:'14px 16px',marginBottom:22,border:`2px solid ${info.pal.mid}`,maxWidth:320,margin:'0 auto 20px'}},E('p',{style:{fontSize:12,color:info.pal.dark,lineHeight:1.65,fontFamily:'var(--bfont)',fontWeight:600}},info.msg)),
+      E('button',{className:'btn btn-primary',onClick:endBreak},'Back to Focus')
+    );
+  };
+
+  // ─── SETTINGS ───
+  const SettingsScreen=()=>{
+    const[localApiKey,setLocalApiKey]=useState('');
+    const[apiSaved,setApiSaved]=useState(false);
+    const saveApiKey=()=>{if(!localApiKey.trim())return;setApiKey(localApiKey.trim());setApiSaved(true);saveSettings(uid,{theme,icons,decorations},localApiKey.trim());showToast('API key saved ✦');setTimeout(()=>setApiSaved(false),3000);};
+    const[editingIcon,setEditingIcon]=useState(null);
+    const[newIcon,setNewIcon]=useState('');
+
+    return E('div',{className:'fade-up'},
+      E('div',{className:'page-header'},E('h1',{},(icons.settings||'⚙️')+' Settings'),E('p',{},'Personalise your study space')),
+      E('div',{className:'settings-tabs'},
+        [['theme','🎨 Theme'],['icons','🖼 Icons'],['deco','✨ Decor'],['api','🔑 API Key'],['account','👤 Account']].map(([k,l])=>E('button',{key:k,className:`tab-btn ${settingsTab===k?'active':''}`,onClick:()=>setSettingsTab(k)},l))
+      ),
+      // ── THEME TAB ──
+      settingsTab==='theme'&&E('div',{},
+        E('div',{style:{fontSize:9,fontFamily:'var(--pfont)',color:'var(--mu)',marginBottom:10,letterSpacing:'.3px'}},'Choose your vibe ✿'),
+        E('div',{className:'theme-grid'},
+          themes.map(t=>E('div',{key:t.id,className:`theme-card ${theme===t.id?'active':''}`,onClick:()=>setTheme(t.id),style:{background:`var(--${t.id==='dark'?'card':'pk-lt'})`}},
+            E('div',{style:{display:'flex',gap:6,marginBottom:8}},t.swatches.map((s,i)=>E('div',{key:i,className:'swatch',style:{background:s}}))),
+            E('div',{style:{fontSize:10,fontFamily:'var(--pfont)',color:'var(--tx)',marginBottom:2}},t.emoji,' ',t.name),
+            E('div',{style:{fontSize:10,color:'var(--mu)',fontFamily:'var(--bfont)',fontWeight:600}},t.id==='pink'?'Girly kawaii vibes 🌸':t.id==='blue'?'Cool ocean vibes 🌊':t.id==='purple'?'Dreamy lavender 💜':'Dark midnight mode 🌙')
+          ))
+        )
+      ),
+      // ── ICONS TAB ──
+      settingsTab==='icons'&&E('div',{},
+        E('div',{style:{fontSize:9,fontFamily:'var(--pfont)',color:'var(--mu)',marginBottom:10}},'Tap any icon to change it'),
+        E('div',{className:'icon-grid'},
+          [['home','Home'],['notes','Notes'],['study','Study'],['calendar','Calendar'],['focus','Focus'],['settings','Settings']].map(([k,l])=>
+            E('div',{key:k,className:'icon-item'},
+              E('div',{className:'icon-preview'},editingIcon===k?E('input',{className:'icon-input',type:'text',value:newIcon,onChange:e=>setNewIcon(e.target.value),autoFocus:true,maxLength:4,onBlur:()=>{if(newIcon.trim()){setIcons(p=>({...p,[k]:newIcon.trim()}));showToast(`${l} icon updated`);}setEditingIcon(null);setNewIcon('');},onKeyDown:e=>{if(e.key==='Enter'){if(newIcon.trim()){setIcons(p=>({...p,[k]:newIcon.trim()}));}setEditingIcon(null);setNewIcon('');}}}):icons[k]||DEFAULT_ICONS[k]),
+              E('div',{style:{flex:1}},
+                E('div',{style:{fontSize:10,fontFamily:'var(--pfont)',color:'var(--tx)',marginBottom:2}},l),
+                E('button',{onClick:()=>{setEditingIcon(k);setNewIcon(icons[k]||DEFAULT_ICONS[k]);},className:'btn-ghost',style:{fontSize:10,padding:'3px 7px',borderRadius:6,border:'1px solid var(--bd)'}},'Change')
+              )
+            )
+          )
+        ),
+        E('button',{className:'btn btn-outline btn-block',onClick:()=>{setIcons({...DEFAULT_ICONS});showToast('Icons reset');},style:{marginTop:12}},'Reset to Default')
+      ),
+      // ── DECORATIONS TAB ──
+      settingsTab==='deco'&&E('div',{},
+        E('div',{style:{fontSize:9,fontFamily:'var(--pfont)',color:'var(--mu)',marginBottom:8}},'Click to add · Drag to move · Double-click to remove'),
+        E('div',{className:'deco-palette'},
+          DECO_PALETTE.map(emoji=>E('div',{key:emoji,className:'deco-chip',onClick:()=>{addDeco(emoji);showToast(`${emoji} added!`);}},emoji))
+        ),
+        E('div',{style:{background:'var(--pk-lt)',border:'2px solid var(--pk-md)',borderRadius:'var(--r)',padding:'10px',minHeight:80,position:'relative',marginBottom:10}},
+          E('div',{style:{fontSize:10,color:'var(--mu)',textAlign:'center',fontFamily:'var(--bfont)',fontWeight:700,opacity:.6}},'Active decorations on screen →'),
+          decorations.length===0&&E('div',{style:{textAlign:'center',fontSize:12,color:'var(--mu)',marginTop:10,fontFamily:'var(--bfont)'}},'No decorations yet. Add some above!')
+        ),
+        E('div',{style:{display:'flex',gap:8}},
+          E('div',{style:{fontSize:11,color:'var(--mu)',fontFamily:'var(--bfont)',fontWeight:700,flex:1}},`${decorations.length} decoration${decorations.length!==1?'s':''} placed`),
+          E('button',{className:'btn btn-outline btn-sm',onClick:()=>{setDecorations([]);showToast('Decorations cleared');}},'Clear All')
+        )
+      ),
+      // ── API KEY TAB ──
+      settingsTab==='api'&&E('div',{},
+        E('div',{style:{background:'var(--pk-lt)',border:'2px solid var(--pk-md)',borderRadius:'var(--r)',padding:'12px',marginBottom:14}},
+          E('div',{style:{fontSize:9,fontFamily:'var(--pfont)',color:'var(--pk3)',marginBottom:6}},'🔑 Anthropic API Key'),
+          E('p',{style:{fontSize:11,color:'var(--mu)',lineHeight:1.5,fontFamily:'var(--bfont)',fontWeight:600}},'Your key is stored encrypted in Firebase (not in browser storage). Only you can access it. Get a key at ',E('a',{href:'https://console.anthropic.com',target:'_blank',rel:'noopener noreferrer',style:{color:'var(--pk3)'}},'console.anthropic.com'),'.'),
+          apiKey&&E('div',{style:{fontSize:11,color:'var(--mint3)',fontWeight:700,marginTop:6,fontFamily:'var(--bfont)'}},'✓ API key is active ('+apiKey.slice(0,8)+'…'+')')
+        ),
+        E('div',{className:'auth-field'},
+          E('label',{className:'auth-label'},'Enter New API Key'),
+          E('input',{type:'password',placeholder:'sk-ant-…',value:localApiKey,onChange:e=>setLocalApiKey(e.target.value),style:{fontFamily:'var(--bfont)'}})
+        ),
+        E('button',{className:'btn btn-primary btn-block',onClick:saveApiKey,style:{padding:'11px',marginTop:4}},apiSaved?'Saved ✦':'Save API Key'),
+        apiKey&&E('button',{className:'btn btn-ghost btn-block',onClick:()=>{setApiKey('');setLocalApiKey('');saveSettings(uid,{theme,icons,decorations},'');showToast('API key removed');},style:{marginTop:8,color:'var(--rose3)'}},'Remove Key')
+      ),
+      // ── ACCOUNT TAB ──
+      settingsTab==='account'&&E('div',{},
+        E('div',{className:'card',style:{marginBottom:12}},
+          E('div',{style:{display:'flex',alignItems:'center',gap:12,marginBottom:12}},
+            E('div',{style:{width:52,height:52,borderRadius:'50%',background:'var(--pk-lt)',border:'2px solid var(--pk2)',display:'flex',alignItems:'center',justifyContent:'center',fontSize:22,flexShrink:0}},(user.displayName||'U').charAt(0).toUpperCase()),
+            E('div',{},
+              E('div',{style:{fontFamily:'var(--pfont)',fontSize:11,color:'var(--tx)',marginBottom:3}},user.displayName||'User'),
+              E('div',{style:{fontSize:11,color:'var(--mu)',fontFamily:'var(--bfont)',fontWeight:600}},user.email)
+            )
+          ),
+          E('div',{style:{display:'flex',gap:8,flexWrap:'wrap'}},
+            E('div',{style:{fontSize:10,color:'var(--mu)',fontFamily:'var(--bfont)',fontWeight:700,flex:1}},'UID: '+uid.slice(0,12)+'…'),
+            E('div',{className:'chip chip-mint'},'Verified')
+          )
+        ),
+        E('div',{className:'card',style:{marginBottom:12,background:'var(--rose-lt)',borderColor:'var(--rose2)'}},
+          E('div',{style:{fontSize:10,fontFamily:'var(--pfont)',color:'var(--rose3)',marginBottom:8,letterSpacing:'.3px'}},'Danger Zone'),
+          E('p',{style:{fontSize:11,color:'var(--mu)',marginBottom:12,fontFamily:'var(--bfont)',fontWeight:600,lineHeight:1.4}},'Signing out will clear your session. Your data is safely saved in Firebase.'),
+          E('button',{className:'btn btn-danger btn-block',onClick:async()=>{await fbSignOut();showToast('Signed out');},style:{padding:'11px'}},'Sign Out')
+        )
+      )
+    );
+  };
+
+  // ─── API MODAL ───
+  const ApiModal=()=>E('div',{className:'overlay',onClick:e=>{if(e.target.className==='overlay')setShowApiModal(false)}},
+    E('div',{className:'modal'},
+      E('div',{className:'pw-bar rounded-top'},E('span',{className:'pw-dot'}),E('span',{className:'pw-dot'}),E('span',{className:'pw-dot'}),E('span',{className:'pw-ttl'},'api.required')),
+      E('div',{className:'modal-body'},
+        E('div',{style:{textAlign:'center',marginBottom:14}},E('div',{style:{fontSize:36,marginBottom:6}},'🔑'),E('div',{style:{fontFamily:'var(--pfont)',fontSize:11,color:'var(--pk3)'}},'API Key Required')),
+        E('p',{style:{fontSize:12,color:'var(--mu)',lineHeight:1.6,marginBottom:16,fontFamily:'var(--bfont)'}},'Enter your Anthropic API key to enable AI features. It\'s stored encrypted in your Firebase account.'),
+        E('input',{type:'password',placeholder:'sk-ant-…',value:apiKeyInput,onChange:ev=>setApiKeyInput(ev.target.value),style:{marginBottom:12}}),
+        E('div',{style:{background:'var(--peach-lt)',border:'2px solid var(--peach2)',borderRadius:'var(--rs)',padding:'9px 11px',marginBottom:12}},E('p',{style:{fontSize:11,color:'var(--peach3)',lineHeight:1.5,fontFamily:'var(--bfont)'}},'Stored encrypted in Firebase. Never visible in browser storage.')),
+        E('div',{style:{display:'flex',gap:8}},
+          E('button',{className:'btn btn-outline',onClick:()=>setShowApiModal(false),style:{flex:1}},'Cancel'),
+          E('button',{className:'btn btn-primary',onClick:()=>{if(apiKeyInput.trim()){setApiKey(apiKeyInput.trim());saveSettings(uid,{theme,icons,decorations},apiKeyInput.trim());setApiKeyInput('');setShowApiModal(false);showToast('API key saved ✦');}},style:{flex:1}},'Save Key')
+        )
+      )
+    )
+  );
+
+  // ─── CHARACTER COMPONENTS ───
+  const PixelGirl=()=>E('div',{className:'pixel-girl'},
+    E('div',{className:'hair-back'}),E('div',{className:'head'}),E('div',{className:'bang'}),
+    E('div',{className:'headset'}),E('div',{className:'ear l'}),E('div',{className:'ear r'}),
+    E('div',{className:'eye l'}),E('div',{className:'eye r'}),E('div',{className:'mouth'}),
+    E('div',{className:'blush l'}),E('div',{className:'blush r'}),E('div',{className:'bow'}),
+    E('div',{className:'body'}),E('div',{className:'skirt'}),
+    E('div',{className:'arm l'}),E('div',{className:'arm r'}),
+    E('div',{className:'leg l'}),E('div',{className:'leg r'}),
+    E('div',{className:'shoe l'}),E('div',{className:'shoe r'})
+  );
+  const Ghost=()=>E('div',{className:`game-ghost ${(focusOn||screen==='focus')?'paused':''}`},
+    E('div',{className:'ghost-msg'},'Boo! Study hard ✦'),
+    E('div',{className:'ghost-wrap'},
+      E('div',{className:'ghost-head'},E('div',{className:'ghost-eyes'},E('div',{className:'ghost-eye'}),E('div',{className:'ghost-eye'})),E('div',{className:'ghost-bl l'}),E('div',{className:'ghost-bl r'})),
+      E('div',{className:'ghost-tail'})
+    )
+  );
+  const Guide=()=>E('div',{className:`guide-companion ${guideState.action} ${guideState.talk?'talk':''} ${(focusOn||screen==='focus')?'paused':''}`,onMouseEnter:()=>runGuide(guideState.action,guideLines[screen]||guideLine,true),onClick:()=>runGuide('jump','Boop! 💗 I\'m always here to help~',true)},
+    E('div',{className:'guide-bubble'},guideLine),
+    Img({src:assets.book,cls:'guide-prop book',alt:'book'}),
+    Img({src:assets.coffee,cls:'guide-prop coffee',alt:'coffee'}),
+    E(PixelGirl,{})
+  );
+
+  // ─── RENDER ───
+  if(!appLoaded)return E('div',{className:'loading-screen'},
+    E('div',{style:{fontSize:40,animation:'bounce 1s steps(2,end) infinite'}},'✿'),
+    E('div',{style:{fontFamily:'var(--pfont)',fontSize:10,color:'var(--tx)',textAlign:'center',letterSpacing:'.5px'}},'Syncing your data…'),
+    E('div',{style:{display:'flex',gap:7}},
+      [0,1,2].map(i=>E('div',{key:i,style:{width:9,height:9,borderRadius:'50%',background:pal.lav.dark,animation:`bounce .8s ${i*.22}s ease-in-out infinite alternate`}}))
+    )
+  );
+
+  if(loading)return E('div',{className:'loading-screen'},
+    E('div',{style:{fontSize:40,animation:'bounce 1s steps(2,end) infinite'}},'📚'),
+    E('div',{style:{fontFamily:'var(--pfont)',fontSize:10,color:'var(--tx)',textAlign:'center',maxWidth:260,lineHeight:1.8,letterSpacing:'.5px'}},loadMsg),
+    E('div',{style:{display:'flex',gap:7}},
+      [0,1,2].map(i=>E('div',{key:i,style:{width:9,height:9,borderRadius:'50%',background:pal.lav.dark,animation:`bounce .8s ${i*.22}s ease-in-out infinite alternate`}}))
+    )
+  );
+
+  const screenMap={home:HomeScreen,notes:NotesScreen,study:StudyScreen,calendar:CalScreen,focus:FocusScreen,break:BreakScreen,settings:SettingsScreen};
+  const ActiveScreen=screenMap[screen]||HomeScreen;
+  const screenTitle={home:'Dashboard',notes:'Study Notes',study:'Study Mode',calendar:'Calendar',focus:'Focus Timer',break:'Break Time',settings:'Settings'};
+  const navItems=[
+    {id:'home',label:'Home'},{id:'notes',label:'Notes'},{id:'study',label:'Study'},
+    {id:'calendar',label:'Calendar'},{id:'focus',label:'Focus'},{id:'settings',label:'Settings'}
+  ];
+
+  return E('div',{style:{display:'flex',minHeight:'calc(100vh - 48px)',width:'100%'}},
+    Img({src:assets.jelly,cls:'decor-clouds',alt:''}),
+    // Sidebar
+    E('div',{className:'sidebar'},
+      E('div',{className:'s-titlebar'},E('span',{className:'s-dot'}),E('span',{className:'s-dot'}),E('span',{className:'s-dot'}),E('span',{className:'s-ttl'},'studybuddy.v5')),
+      E('div',{className:'sidebar-brand'},
+        E('h1',{},'StudyBuddy AI'),
+        E('p',{style:{marginBottom:0}},'AI Study Companion'),
+        E('div',{className:'user-badge'},E('div',{style:{fontSize:16}},(user.displayName||'U').charAt(0).toUpperCase()),E('span',{className:'user-badge-name'},user.displayName||'User'),
+          E('button',{onClick:async()=>{await fbSignOut();showToast('Signed out');},title:'Sign Out',style:{background:'none',border:'none',fontSize:14,color:'var(--mu)',flexShrink:0}},'⏻'))
+      ),
+      E('nav',{className:'sidebar-nav'},
+        navItems.map(item=>E('button',{key:item.id,className:`snav-item${screen===item.id?' active':''}`,onClick:()=>goTo(item.id)},
+          E('span',{className:'snav-icon'},icons[item.id]||DEFAULT_ICONS[item.id]),
+          E('span',{},item.label)
+        ))
+      ),
+      E('div',{className:'sidebar-footer'},
+        E('div',{style:{fontSize:9,color:'var(--mu)',fontFamily:'var(--bfont)',fontWeight:700,textAlign:'center',padding:'4px 0'}},
+          apiKey?'✓ API Key Active':'⚠ No API Key — ',
+          !apiKey&&E('button',{onClick:()=>{setApiKeyInput('');setShowApiModal(true);},style:{background:'none',border:'none',color:'var(--pk3)',fontSize:9,fontWeight:700,textDecoration:'underline',fontFamily:'var(--bfont)'}},'Add Key')
+        )
+      )
+    ),
+    // Main content
+    E('div',{className:'main-content',ref:mainRef,onMouseMove:handleDecoMouseMove,onMouseUp:handleDecoMouseUp},
+      Img({src:assets.cat,cls:'decor-branch',alt:''}),
+      // App decorations (draggable)
+      ...decorations.map(d=>E('div',{key:d.id,className:'placed-deco',
+        style:{left:`${d.x}%`,top:`${d.y}%`,transform:'translate(-50%,-50%)'},
+        onMouseDown:e=>handleDecoMouseDown(e,d.id),
+        onDoubleClick:()=>removeDeco(d.id),
+        title:'Drag to move · Double-click to remove'
+      },d.emoji)),
+      // Subtle bg decorations
+      E('div',{className:'app-deco d1',style:{pointerEvents:'none'}},'✦'),
+      E('div',{className:'app-deco d2',style:{pointerEvents:'none'}},'💫'),
+      E('div',{className:'app-deco d3',style:{pointerEvents:'none'}},'🌸'),
+      // Topbar (mobile)
+      E('div',{className:'topbar'},
+        screen!=='home'&&E('button',{className:'back-btn',onClick:()=>setScreen('home')},'‹'),
+        E('h2',{},screenTitle[screen]),
+        E('button',{onClick:()=>goTo('settings'),style:{background:'none',border:'none',fontSize:18}},icons.settings||'⚙️')
+      ),
+      E('div',{className:'screen-wrap'},E(ActiveScreen,{})),
+      E(Guide,{}),
+      E(Ghost,{})
+    ),
+    // Bottom nav (mobile)
+    E('div',{className:'bottom-nav'},
+      E('div',{className:'bnav-grid'},
+        navItems.map(item=>E('button',{key:item.id,className:`bnav-item${screen===item.id?' active':''}`,onClick:()=>goTo(item.id)},
+          E('div',{className:'bnav-icon'},icons[item.id]||DEFAULT_ICONS[item.id]),
+          E('span',{className:'bnav-label'},item.label)
+        ))
+      )
+    ),
+    showApiModal&&E(ApiModal,{}),
+    toast&&E('div',{className:`toast toast-${toast.type}`},toast.msg)
+  );
+}
+
+// ══════════════════════════════════════════════
+//  ROOT: Auth Gate + Firebase Setup Gate
+// ══════════════════════════════════════════════
+function Root(){
+  const[fbReady,setFbReady]=useState(!!getFBConfig());
+  const[user,setUser]=useState(null);
+  const[authChecked,setAuthChecked]=useState(false);
+
+  const handleFbDone=()=>{setFbReady(true);};
+
+  useEffect(()=>{
+    if(!fbReady||!_auth)return;
+    const unsub=_auth.onAuthStateChanged(u=>{
+      setUser(u);
+      setAuthChecked(true);
+    });
+    return()=>unsub();
+  },[fbReady]);
+
+  if(!fbReady)return E(FirebaseSetupScreen,{onDone:handleFbDone});
+  if(!authChecked)return E('div',{className:'loading-screen'},E('div',{style:{fontSize:40,animation:'bounce 1s steps(2,end) infinite'}},'✿'),E('div',{style:{fontFamily:'var(--pfont)',fontSize:10,color:'var(--pk3)'}},'Loading…'));
+  if(!user)return E(AuthScreen,{onAuth:u=>{setUser(u);}});
+  return E(App,{user,key:user.uid});
+}
+
+try{
+  if(!window.React||!window.ReactDOM)throw new Error('React failed to load');
+  ReactDOM.createRoot(document.getElementById('root')).render(E(Root,{}));
+}catch(err){
+  console.error(err);
+  const fallback=document.getElementById('bbx-fallback');
+  if(fallback)fallback.style.display='flex';
+}
+</script>
+</body>
+</html>

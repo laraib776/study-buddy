@@ -1,0 +1,108 @@
+:root {
+  color-scheme: light;
+  font-family: Inter, system-ui, sans-serif;
+  background: #fffaf8;
+  color: #2a1f34;
+}
+
+body {
+  margin: 0;
+  min-height: 100vh;
+  background: radial-gradient(circle at top left, #fbe8ff 0%, #fffaf8 45%, #fbedf9 100%);
+}
+
+button,
+input,
+textarea {
+  font: inherit;
+}
+
+button {
+  cursor: pointer;
+}
+
+.app-shell {
+  display: grid;
+  grid-template-columns: 260px 1fr;
+  min-height: 100vh;
+}
+
+.main-content {
+  position: relative;
+  padding: 24px;
+  overflow: hidden;
+}
+
+.decor-branch {
+  position: absolute;
+  right: 24px;
+  top: 24px;
+  width: 140px;
+  opacity: 0.7;
+}
+
+.app-decorations {
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+}
+
+.decor-wrap {
+  position: absolute;
+  transition: transform 0.3s ease;
+}
+
+.deco-emoji,
+.decor-wrap img {
+  display: block;
+  width: var(--s, 48px);
+  height: var(--s, 48px);
+}
+
+.topbar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  margin-bottom: 18px;
+}
+
+.topbar h2 {
+  margin: 0;
+  font-size: 1.35rem;
+}
+
+.back-btn,
+.settings-trigger {
+  border: none;
+  background: rgba(255, 255, 255, 0.76);
+  padding: 10px 14px;
+  border-radius: 999px;
+}
+
+.screen-wrap {
+  position: relative;
+  min-height: calc(100vh - 128px);
+}
+
+.theme-blue body {
+  background: radial-gradient(circle at top left, #e0f7ff 0%, #e7f8ff 50%, #fbfcff 100%);
+}
+
+.theme-purple body {
+  background: radial-gradient(circle at top left, #f3e8ff 0%, #f9f0ff 50%, #fff4fb 100%);
+}
+
+.theme-dark body {
+  background: radial-gradient(circle at top left, #1a1f2f 0%, #1d2334 50%, #161a26 100%);
+  color: #e9eef8;
+}
+
+.theme-dark .app-shell,
+.theme-dark .sidebar,
+.theme-dark .layout-card,
+.theme-dark .button,
+.theme-dark .modal-backdrop {
+  background: #141824;
+  color: #e7ecff;
+}

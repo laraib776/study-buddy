@@ -1,0 +1,992 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>StudyBuddy ✦ Pixel Companion</title>
+<link href="https://fonts.googleapis.com/css2?family=Klee+One&family=DM+Serif+Display:ital@0;1&display=swap" rel="stylesheet">
+<style>
+:root {
+  --bg: #faf4f7;
+  --sidebar: #1e0f1e;
+  --sidebar2: #160b16;
+  --accent: #d46090;
+  --accent2: #e890b0;
+  --accent3: #f0b8cc;
+  --card: #ffffff;
+  --border: #f0dde8;
+  --text: #3a1a2e;
+  --muted: #9070a0;
+  --pink-soft: #f8eef4;
+  --pink-mid: #f0d0e0;
+}
+*{margin:0;padding:0;box-sizing:border-box}
+body{font-family:'Klee One',cursive;background:var(--bg);height:100vh;overflow:hidden;display:flex;user-select:none}
+
+/* ── SIDEBAR ── */
+.sidebar{width:210px;min-width:210px;background:linear-gradient(180deg,var(--sidebar) 0%,var(--sidebar2) 100%);padding:24px 14px;display:flex;flex-direction:column;gap:6px;z-index:10;box-shadow:4px 0 20px rgba(0,0,0,.18)}
+.logo{color:var(--accent3);font-family:'DM Serif Display',serif;font-size:17px;margin-bottom:18px;letter-spacing:.06em;display:flex;align-items:center;gap:8px}
+.logo-dot{width:8px;height:8px;background:var(--accent2);border-radius:50%;animation:pulse 2s ease-in-out infinite}
+@keyframes pulse{0%,100%{opacity:1;transform:scale(1)}50%{opacity:.5;transform:scale(.7)}}
+.nav-item{padding:10px 12px;border-radius:10px;color:#b090c0;cursor:pointer;transition:all .2s;font-size:13px;display:flex;align-items:center;gap:10px}
+.nav-item:hover,.nav-item.active{background:rgba(240,180,210,.12);color:#f0d0e0}
+.nav-item .ni{font-size:15px}
+.nav-spacer{flex:1}
+.streak-badge{background:rgba(212,96,144,.15);border:1px solid rgba(212,96,144,.3);border-radius:10px;padding:8px 12px;color:#f0b0c0;font-size:12px;margin-top:4px;text-align:center}
+
+/* ── MAIN ── */
+.main{flex:1;display:flex;flex-direction:column;overflow:hidden;min-width:0}
+.topbar{background:var(--card);padding:14px 24px;display:flex;align-items:center;gap:14px;border-bottom:1px solid var(--border);z-index:5;box-shadow:0 2px 8px rgba(180,80,120,.06)}
+.topbar-title{font-family:'DM Serif Display',serif;font-size:19px;color:var(--text);font-style:italic}
+.greeting-sub{font-size:12px;color:var(--muted);margin-top:1px}
+.avatar{width:34px;height:34px;background:linear-gradient(135deg,var(--accent),var(--accent3));border-radius:50%;margin-left:auto;display:flex;align-items:center;justify-content:center;color:white;font-size:14px}
+.content{flex:1;padding:20px 24px;overflow-y:auto;display:grid;grid-template-columns:1fr 1fr;grid-template-rows:auto auto auto;gap:14px;align-content:start}
+.content::-webkit-scrollbar{width:4px}
+.content::-webkit-scrollbar-thumb{background:var(--accent3);border-radius:4px}
+
+/* ── CARDS ── */
+.card{background:var(--card);border-radius:16px;padding:18px;border:1px solid var(--border);box-shadow:0 2px 12px rgba(180,80,120,.06);transition:box-shadow .2s}
+.card:hover{box-shadow:0 4px 20px rgba(180,80,120,.12)}
+.card-label{font-size:11px;color:var(--muted);letter-spacing:.08em;text-transform:uppercase;margin-bottom:12px}
+.timer-dig{font-family:'DM Serif Display',serif;font-size:52px;color:var(--text);text-align:center;letter-spacing:6px;line-height:1}
+.timer-sub{text-align:center;color:var(--muted);font-size:12px;margin-top:6px}
+.timer-btns{display:flex;gap:8px;margin-top:16px;justify-content:center}
+.btn-prim{padding:8px 22px;background:var(--accent);color:white;border:none;border-radius:20px;cursor:pointer;font-size:13px;font-family:'Klee One',cursive;transition:all .2s;box-shadow:0 3px 10px rgba(212,96,144,.3)}
+.btn-prim:hover{background:#c04880;transform:translateY(-1px)}
+.btn-sec{padding:8px 18px;background:white;color:var(--muted);border:1px solid var(--border);border-radius:20px;cursor:pointer;font-size:13px;font-family:'Klee One',cursive;transition:all .2s}
+.btn-sec:hover{background:var(--pink-mid);border-color:var(--accent3)}
+.task-item{display:flex;align-items:center;gap:10px;padding:9px 10px;border-radius:10px;cursor:pointer;border:1px solid transparent;transition:all .2s;margin-bottom:6px}
+.task-item:hover{background:var(--pink-soft);border-color:var(--border)}
+.task-item.done{opacity:.5;text-decoration:line-through}
+.task-cb{width:17px;height:17px;border:2px solid var(--accent3);border-radius:5px;flex-shrink:0;display:flex;align-items:center;justify-content:center;transition:all .2s;font-size:10px}
+.task-item.done .task-cb{background:var(--accent);border-color:var(--accent);color:white}
+.task-text{font-size:13px;color:var(--text)}
+.prog-row{margin-bottom:10px}
+.prog-label{display:flex;justify-content:space-between;font-size:12px;color:var(--muted);margin-bottom:5px}
+.prog-bar{height:7px;background:var(--pink-mid);border-radius:4px;overflow:hidden}
+.prog-fill{height:100%;border-radius:4px;transition:width .8s ease}
+.quote-card{background:linear-gradient(135deg,#1e0a1e,#2e0f2e);color:white;border:1px solid rgba(212,96,144,.2)}
+.quote-text{font-size:14px;line-height:1.7;color:#f0d0e0;font-style:italic}
+.quote-author{font-size:11px;color:#9060a0;margin-top:8px}
+
+/* ── CHARACTER CANVAS ── */
+#charCanvas{position:fixed;z-index:200;image-rendering:pixelated;image-rendering:crisp-edges;cursor:grab;transition:filter .2s;filter:drop-shadow(2px 6px 10px rgba(0,0,0,.25))}
+#charCanvas:active{cursor:grabbing}
+#charCanvas:hover{filter:drop-shadow(2px 6px 14px rgba(212,96,144,.4)) drop-shadow(0 0 20px rgba(240,180,210,.2))}
+
+/* ── SPEECH BUBBLE ── */
+#bubble{position:fixed;z-index:201;background:white;border:2px solid var(--accent3);border-radius:14px;padding:9px 15px;font-size:12.5px;color:var(--text);max-width:190px;text-align:center;pointer-events:none;opacity:0;transform:translateY(6px) scale(.88);transition:all .35s cubic-bezier(.34,1.56,.64,1);line-height:1.5;box-shadow:0 6px 24px rgba(212,96,144,.18);font-family:'Klee One',cursive}
+#bubble.show{opacity:1;transform:translateY(0) scale(1)}
+#bubble::after{content:'';position:absolute;bottom:-9px;left:50%;transform:translateX(-50%);border:5px solid transparent;border-top:9px solid var(--accent3);border-bottom:none}
+
+/* ── STATE BADGE ── */
+#stateBadge{position:fixed;top:72px;right:18px;background:rgba(255,255,255,.92);border:1px solid var(--border);border-radius:20px;padding:6px 14px;font-size:11px;color:var(--muted);z-index:202;backdrop-filter:blur(8px);transition:all .3s;box-shadow:0 2px 10px rgba(0,0,0,.06)}
+
+/* ── CONTROLS ── */
+#controls{position:fixed;bottom:18px;left:50%;transform:translateX(-50%);display:flex;gap:6px;z-index:202;background:rgba(255,255,255,.92);backdrop-filter:blur(14px);padding:10px 14px;border-radius:30px;border:1px solid var(--border);box-shadow:0 4px 24px rgba(0,0,0,.1)}
+.cb{padding:5px 13px;border:1px solid var(--accent3);border-radius:20px;background:white;color:#7a3060;font-size:11.5px;cursor:pointer;transition:all .2s;font-family:'Klee One',cursive}
+.cb:hover{background:var(--accent3);color:white;border-color:var(--accent3)}
+.cb.active-state{background:var(--accent);color:white;border-color:var(--accent)}
+
+/* ── FLOATING EFFECTS ── */
+.float-emoji{position:fixed;pointer-events:none;z-index:199;animation:floatUp 1.6s ease-out forwards}
+@keyframes floatUp{0%{opacity:1;transform:translateY(0) scale(.8) rotate(0deg)}60%{opacity:1}100%{opacity:0;transform:translateY(-90px) scale(.5) rotate(20deg)}}
+.float-zzz{position:fixed;pointer-events:none;z-index:199;color:#8890d0;font-size:13px;font-family:'Klee One',cursive;animation:floatZzz 2.5s ease-out forwards}
+@keyframes floatZzz{0%{opacity:0;transform:translate(0,0) scale(.7)}20%{opacity:1}100%{opacity:0;transform:translate(24px,-70px) scale(1.1)}}
+
+/* ── MOOD RING ── */
+#moodRing{position:fixed;z-index:199;border-radius:50%;pointer-events:none;transition:all .5s ease;opacity:0}
+#moodRing.show{opacity:.15}
+
+/* ── INACTIVITY OVERLAY ── */
+#inactivityHint{position:fixed;top:50%;left:50%;transform:translate(-50%,-50%) scale(.9);background:rgba(255,255,255,.95);border:1px solid var(--border);border-radius:20px;padding:20px 28px;text-align:center;z-index:300;opacity:0;pointer-events:none;transition:all .4s;backdrop-filter:blur(12px);box-shadow:0 12px 40px rgba(180,80,120,.15)}
+#inactivityHint.show{opacity:1;transform:translate(-50%,-50%) scale(1)}
+#inactivityHint h3{font-family:'DM Serif Display',serif;color:var(--text);margin-bottom:6px;font-size:16px}
+#inactivityHint p{color:var(--muted);font-size:13px}
+</style>
+</head>
+<body>
+
+<!-- ═══════════════════════════════════════ APP UI ═══════════════════════════════════════ -->
+<div class="sidebar">
+  <div class="logo"><span class="logo-dot"></span> StudyBuddy</div>
+  <div class="nav-item active"><span class="ni">🏠</span> Dashboard</div>
+  <div class="nav-item"><span class="ni">⏱</span> Focus Timer</div>
+  <div class="nav-item"><span class="ni">📋</span> Tasks</div>
+  <div class="nav-item"><span class="ni">📊</span> Progress</div>
+  <div class="nav-item"><span class="ni">🌸</span> Companion</div>
+  <div class="nav-item"><span class="ni">📚</span> Library</div>
+  <div class="nav-spacer"></div>
+  <div class="streak-badge">🔥 7-Day Streak!</div>
+  <div class="nav-item" style="margin-top:6px"><span class="ni">⚙</span> Settings</div>
+</div>
+
+<div class="main">
+  <div class="topbar">
+    <div>
+      <div class="topbar-title">Good evening ✦</div>
+      <div class="greeting-sub">Ready to study? Your companion is waiting~</div>
+    </div>
+    <div class="avatar">✦</div>
+  </div>
+  <div class="content">
+
+    <!-- Timer -->
+    <div class="card" id="timerCard">
+      <div class="card-label">Focus Session</div>
+      <div class="timer-dig" id="timerDisplay">25:00</div>
+      <div class="timer-sub" id="timerStatus">Pomodoro Timer • Ready</div>
+      <div class="timer-btns">
+        <button class="btn-prim" id="btnFocus" onclick="startFocus()">▶ Focus</button>
+        <button class="btn-sec" onclick="triggerBreak()">☕ Break</button>
+        <button class="btn-sec" onclick="resetTimer()" style="padding:8px 12px">↺</button>
+      </div>
+    </div>
+
+    <!-- Tasks -->
+    <div class="card">
+      <div class="card-label">Today's Tasks</div>
+      <div id="taskList">
+        <div class="task-item" onclick="toggleTask(this)"><div class="task-cb"></div><span class="task-text">Review Chapter 3 notes</span></div>
+        <div class="task-item" onclick="toggleTask(this)"><div class="task-cb"></div><span class="task-text">Complete Math exercises</span></div>
+        <div class="task-item" onclick="toggleTask(this)"><div class="task-cb"></div><span class="task-text">Write essay outline</span></div>
+        <div class="task-item" onclick="toggleTask(this)"><div class="task-cb"></div><span class="task-text">Vocabulary flashcards</span></div>
+        <div class="task-item" onclick="toggleTask(this)"><div class="task-cb"></div><span class="task-text">Practice problems set B</span></div>
+      </div>
+    </div>
+
+    <!-- Progress -->
+    <div class="card">
+      <div class="card-label">Today's Progress</div>
+      <div class="prog-row"><div class="prog-label"><span>Focus Time</span><span>2.5h / 4h</span></div><div class="prog-bar"><div class="prog-fill" style="width:62%;background:linear-gradient(90deg,#d46090,#f0b0c0)"></div></div></div>
+      <div class="prog-row"><div class="prog-label"><span>Tasks Done</span><span id="taskCount">0 / 5</span></div><div class="prog-bar"><div class="prog-fill" id="taskBar" style="width:0%;background:linear-gradient(90deg,#a060c0,#d090e0)"></div></div></div>
+      <div class="prog-row"><div class="prog-label"><span>Break Time</span><span>15m / 30m</span></div><div class="prog-bar"><div class="prog-fill" style="width:50%;background:linear-gradient(90deg,#60a0d0,#90c0e8)"></div></div></div>
+    </div>
+
+    <!-- Quote -->
+    <div class="card quote-card">
+      <div class="card-label" style="color:#d090c0">✦ Daily Motivation</div>
+      <div class="quote-text" id="quoteText">"The secret of getting ahead is getting started."</div>
+      <div class="quote-author">— Mark Twain</div>
+    </div>
+
+    <!-- Stats -->
+    <div class="card" style="grid-column:span 2">
+      <div class="card-label">Weekly Overview</div>
+      <div style="display:flex;gap:12px">
+        <div style="flex:1;text-align:center;padding:10px;background:var(--pink-soft);border-radius:10px">
+          <div style="font-family:'DM Serif Display',serif;font-size:26px;color:var(--accent)">14h</div>
+          <div style="font-size:11px;color:var(--muted)">Total Focus</div>
+        </div>
+        <div style="flex:1;text-align:center;padding:10px;background:var(--pink-soft);border-radius:10px">
+          <div style="font-family:'DM Serif Display',serif;font-size:26px;color:#a060c0">23</div>
+          <div style="font-size:11px;color:var(--muted)">Tasks Done</div>
+        </div>
+        <div style="flex:1;text-align:center;padding:10px;background:var(--pink-soft);border-radius:10px">
+          <div style="font-family:'DM Serif Display',serif;font-size:26px;color:#60a0c0">12</div>
+          <div style="font-size:11px;color:var(--muted)">Sessions</div>
+        </div>
+        <div style="flex:1;text-align:center;padding:10px;background:var(--pink-soft);border-radius:10px">
+          <div style="font-family:'DM Serif Display',serif;font-size:26px;color:#d08040">7🔥</div>
+          <div style="font-size:11px;color:var(--muted)">Day Streak</div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ═══════════════════════════════════════ CHARACTER SYSTEM ═══════════════════════════════════════ -->
+<canvas id="charCanvas"></canvas>
+<div id="bubble"></div>
+<div id="stateBadge">🌸 idle</div>
+<div id="moodRing"></div>
+
+<!-- Controls -->
+<div id="controls">
+  <button class="cb active-state" id="cb-idle"      onclick="setState('idle')">😊 Idle</button>
+  <button class="cb"              id="cb-study"     onclick="setState('study')">📚 Study</button>
+  <button class="cb"              id="cb-break"     onclick="setState('break')">☕ Break</button>
+  <button class="cb"              id="cb-celebrate" onclick="setState('celebrate')">🎉 Celebrate</button>
+  <button class="cb"              id="cb-sleep"     onclick="setState('sleep')">💤 Sleep</button>
+  <button class="cb"              id="cb-curious"   onclick="setState('curious')">👀 Curious</button>
+</div>
+
+<!-- Inactivity hint -->
+<div id="inactivityHint">
+  <h3>Still there? 🌸</h3>
+  <p>Your companion is waiting~<br>Let's get back to studying!</p>
+</div>
+
+<script>
+/* ═══════════════════════════════════════════════════════════════
+   PIXEL ART COMPANION ENGINE
+   16×24 virtual pixels · 6px per pixel = 96×144 canvas
+═══════════════════════════════════════════════════════════════ */
+
+const cv = document.getElementById('charCanvas');
+const cx = cv.getContext('2d');
+const SCALE = 7;          // px per virtual pixel
+const VW = 16, VH = 24;   // virtual dimensions
+
+cv.width  = VW * SCALE;
+cv.height = VH * SCALE;
+cv.style.imageRendering = 'pixelated';
+
+/* ── PALETTE ── */
+const N = null;  // transparent
+const P = {
+  SK : '#f7e0d0',  // skin
+  SK2: '#eaccc0',  // skin shadow
+  HA : '#180e0e',  // hair dark
+  HA2: '#2e1a1a',  // hair mid
+  HPL: '#eaacbc',  // headphone light
+  HPD: '#c07888',  // headphone dark
+  JKL: '#f5cfd8',  // jacket light
+  JKM: '#ddb0bc',  // jacket mid
+  JKD: '#c49098',  // jacket dark
+  SKT: '#e4c2a8',  // skirt
+  SKS: '#caa890',  // skirt shadow
+  WHT: '#f6f2f1',  // white / sock
+  EYE: '#18182a',  // eye
+  HL : '#ffffff',  // highlight
+  BLU: '#ffa8c0',  // blush
+  MTH: '#b06070',  // mouth
+  SHD: '#807080',  // shoe dark
+  SHL: '#b0a8a8',  // shoe light
+  RIB: '#d46070',  // ribbon
+  COL: '#f8f4f4',  // collar
+  BK : '#7890c0',  // book blue
+  BKL: '#9ab0d8',  // book light
+  CUP: '#e4d4c0',  // cup
+};
+
+/* ── HELPERS ── */
+function px(x, y, col, w=1, h=1, a=1) {
+  if(!col || x<0 || y<0 || x+w>VW || y+h>VH) return;
+  cx.globalAlpha = a;
+  cx.fillStyle = col;
+  cx.fillRect(x*SCALE, y*SCALE, w*SCALE, h*SCALE);
+  cx.globalAlpha = 1;
+}
+
+function clear() { cx.clearRect(0, 0, cv.width, cv.height); }
+
+/* ═══════════════════════════════════════════════════════════════
+   CHARACTER DRAWING  (right-facing by default)
+═══════════════════════════════════════════════════════════════ */
+function drawChar(s) {
+  const {eye='open', mouth='smile', bob=0, jump=0,
+         arm='sides', leg='stand', blush=.5, flip=false} = s;
+  const yo = bob + jump; // y offset
+
+  if(flip) { cx.save(); cx.scale(-1,1); cx.translate(-cv.width,0); }
+
+  clear();
+
+  function p(x,y,c,w=1,h=1,a=1){ px(x, y+yo, c, w, h, a); }
+
+  /* Clamp yo so nothing goes negative */
+  // Headphone band
+  for(let x=3;x<=12;x++) p(x,0,P.HPL);
+  p(6,0,'#f8c8d8'); p(7,0,'#f8c8d8');  // highlight
+  // Ear pads
+  p(1,1,P.HPD,2,2); p(13,1,P.HPD,2,2);
+  p(1,1,P.HPL,1,1,.4); p(13,1,P.HPL,1,1,.4);
+
+  /* Hair top */
+  for(let x=2;x<=13;x++) p(x,1,P.HA);
+  for(let x=1;x<=14;x++) p(x,2,P.HA);
+  p(7,1,P.HA2); p(8,1,P.HA2); // part highlight
+
+  /* Face base */
+  for(let x=3;x<=12;x++) p(x,3,P.SK);
+  for(let y=4;y<=8;y++) for(let x=3;x<=12;x++) p(x,y,P.SK);
+  // Subtle cheek shadow
+  p(3,7,P.SK2); p(12,7,P.SK2);
+
+  /* Side hair (long) */
+  for(let y=3;y<=14;y++) { p(1,y,P.HA); p(2,y,P.HA); }
+  for(let y=3;y<=14;y++) { p(13,y,P.HA); p(14,y,P.HA); }
+  // Inner hair lighter
+  p(2,5,P.HA2); p(2,6,P.HA2); p(13,5,P.HA2); p(13,6,P.HA2);
+
+  /* Eyes */
+  if(eye==='open'){
+    p(4,5,P.EYE,2,1); p(4,6,P.EYE,2,1);
+    p(4,5,P.HL,1,1,.45); p(5,6,P.HL,1,1,.3);
+    p(10,5,P.EYE,2,1); p(10,6,P.EYE,2,1);
+    p(10,5,P.HL,1,1,.45); p(11,6,P.HL,1,1,.3);
+  } else if(eye==='blink'){
+    p(4,6,P.EYE,2); p(10,6,P.EYE,2);
+  } else if(eye==='happy'){
+    p(4,6,P.EYE); p(5,5,P.EYE); p(6,6,P.EYE);
+    p(10,6,P.EYE); p(11,5,P.EYE); p(12,6,P.EYE);
+  } else if(eye==='sleepy'){
+    p(4,5,P.SK2,2); p(4,6,P.EYE,2);
+    p(10,5,P.SK2,2); p(10,6,P.EYE,2);
+  } else if(eye==='excited'){
+    p(4,5,P.EYE,2); p(4,6,P.EYE,2);
+    p(10,5,P.EYE,2); p(10,6,P.EYE,2);
+    p(4,5,P.HL,1,1,.7); p(5,6,P.HL,1,1,.7);
+    p(10,5,P.HL,1,1,.7); p(11,6,P.HL,1,1,.7);
+    p(3,4,P.HL,1,1,.9); p(13,4,P.HL,1,1,.9); // sparkle
+  } else if(eye==='focused'){
+    p(4,5,P.SK2,2); p(4,6,P.EYE,2); p(5,6,P.EYE);
+    p(10,5,P.SK2,2); p(10,6,P.EYE,2); p(11,6,P.EYE);
+  } else if(eye==='sad'){
+    p(4,5,P.EYE,2); p(4,6,P.EYE,2);
+    p(10,5,P.EYE,2); p(10,6,P.EYE,2);
+    p(3,5,P.SK2); p(13,5,P.SK2); // droopy
+  }
+
+  /* Blush */
+  p(3,7,P.BLU,2,1, blush*.65);
+  p(11,7,P.BLU,2,1, blush*.65);
+
+  /* Mouth */
+  if(mouth==='smile'){ p(6,8,P.MTH); p(7,8,P.MTH); }
+  else if(mouth==='big_smile'){ p(5,7,P.MTH); p(6,8,P.MTH); p(7,8,P.MTH); p(8,8,P.MTH); p(9,7,P.MTH); }
+  else if(mouth==='oh'){ p(7,7,P.MTH); p(7,8,P.MTH); p(6,8,P.MTH); p(8,8,P.MTH); }
+  else if(mouth==='straight'){ p(5,8,P.MTH,4); }
+  else if(mouth==='sad'){ p(5,8,P.MTH); p(6,7,P.MTH); p(7,7,P.MTH); p(8,7,P.MTH); p(9,8,P.MTH); }
+  else if(mouth==='tiny'){ p(7,8,P.MTH); }
+  else if(mouth==='open'){ p(6,8,P.MTH,3); p(7,7,P.MTH); p(6,8,'#3a1020',1,1,.4); }
+
+  /* Neck */
+  p(6,9,P.SK,4);
+  /* Collar */
+  p(4,9,P.COL,8); p(5,10,P.COL,6);
+  /* Ribbon bow */
+  p(6,10,P.RIB); p(7,10,P.RIB);
+  p(5,11,P.RIB); p(6,11,P.RIB); p(7,11,P.RIB); p(8,11,P.RIB);
+
+  /* Jacket body */
+  for(let y=10;y<=15;y++) for(let x=3;x<=12;x++) p(x,y,P.JKL);
+  // Sides shadow
+  for(let y=10;y<=15;y++){ p(3,y,P.JKM); p(12,y,P.JKM); }
+  // Center seam
+  for(let y=12;y<=15;y++) p(8,y,P.JKM);
+  // Buttons
+  p(8,12,P.WHT); p(8,14,P.WHT);
+  // Pocket hints
+  p(4,14,P.JKM); p(11,14,P.JKM);
+
+  /* ARMS */
+  if(arm==='sides'){
+    p(1,11,P.JKL,2); p(1,12,P.JKL,2); p(1,13,P.JKL,2);
+    p(1,14,P.SK,2);
+    p(13,11,P.JKL,2); p(13,12,P.JKL,2); p(13,13,P.JKL,2);
+    p(13,14,P.SK,2);
+  } else if(arm==='wave'){
+    p(1,11,P.JKL,2); p(1,12,P.JKL,2); p(1,13,P.JKL,2); p(1,14,P.SK,2);
+    // raised right arm
+    p(13,6,P.SK,2);
+    p(13,7,P.JKL,2); p(13,8,P.JKL,2); p(13,9,P.JKL,2); p(13,10,P.JKL,2);
+  } else if(arm==='wave2'){
+    p(1,11,P.JKL,2); p(1,12,P.JKL,2); p(1,13,P.JKL,2); p(1,14,P.SK,2);
+    p(13,5,P.SK,2); // hand higher
+    p(13,6,P.JKL,2); p(13,7,P.JKL,2); p(13,8,P.JKL,2); p(13,9,P.JKL,2);
+  } else if(arm==='clap'){
+    p(2,9,P.SK,2);
+    p(2,10,P.JKL,2); p(2,11,P.JKL,2);
+    p(12,9,P.SK,2);
+    p(12,10,P.JKL,2); p(12,11,P.JKL,2);
+  } else if(arm==='both_up'){
+    p(1,7,P.SK,2);
+    p(1,8,P.JKL,2); p(1,9,P.JKL,2); p(1,10,P.JKL,2);
+    p(13,7,P.SK,2);
+    p(13,8,P.JKL,2); p(13,9,P.JKL,2); p(13,10,P.JKL,2);
+  } else if(arm==='read'){
+    // arms holding book in front
+    p(1,12,P.JKL,2); p(1,13,P.JKL,2); p(1,14,P.SK,2);
+    p(13,12,P.JKL,2); p(13,13,P.JKL,2); p(13,14,P.SK,2);
+    // book
+    p(3,15,P.BK,10,3);
+    p(4,15,P.BKL,8,2);
+    p(8,15,P.BK,1,3);
+    p(4,16,P.HL,6,1,.25);
+  } else if(arm==='drink'){
+    p(1,11,P.JKL,2); p(1,12,P.JKL,2); p(1,13,P.SK,2);
+    // right arm holding cup up
+    p(13,9,P.SK,2);
+    p(13,10,P.JKL,2); p(13,11,P.JKL,2); p(13,12,P.JKL,2);
+    // cup
+    p(11,8,P.CUP,3,4); p(10,9,P.CUP,1,2);
+    p(11,8,'#f0e8e0',2,1,.5);
+    // steam
+    p(12,7,'#cccccc',1,1,.3); p(11,6,'#cccccc',1,1,.2);
+  } else if(arm==='sleep'){
+    p(0,13,P.JKL,3); p(0,14,P.SK,3);
+    p(13,13,P.JKL,3); p(13,14,P.SK,3);
+  }
+
+  /* Skirt */
+  p(3,16,P.SKT,10); p(2,17,P.SKT,12);
+  p(4,16,'#eac8b0',3,1,.45);
+  p(3,17,P.SKS,2); p(9,17,P.SKS,3);
+
+  /* Legs & Shoes */
+  if(leg==='stand'){
+    p(4,18,P.WHT,2); p(4,19,P.WHT,2); p(4,20,P.WHT,2);
+    p(10,18,P.WHT,2); p(10,19,P.WHT,2); p(10,20,P.WHT,2);
+    p(3,21,P.SHD); p(4,21,P.SHL,2); p(6,21,P.SHD);
+    p(3,22,P.SHD,4);
+    p(9,21,P.SHD); p(10,21,P.SHL,2); p(12,21,P.SHD);
+    p(9,22,P.SHD,4);
+  } else if(leg==='walk1'){
+    p(4,18,P.WHT,2); p(3,19,P.WHT,2); p(2,20,P.WHT,2);
+    p(10,18,P.WHT,2); p(11,19,P.WHT,2); p(12,20,P.WHT,2);
+    p(1,21,P.SHD,4); p(11,21,P.SHD,4);
+  } else if(leg==='walk2'){
+    p(4,18,P.WHT,2); p(5,19,P.WHT,2); p(6,20,P.WHT,2);
+    p(10,18,P.WHT,2); p(9,19,P.WHT,2); p(8,20,P.WHT,2);
+    p(5,21,P.SHD,4); p(7,21,P.SHD,4);
+  } else if(leg==='jump'){
+    p(3,19,P.WHT,2); p(3,20,P.WHT,2);
+    p(11,19,P.WHT,2); p(11,20,P.WHT,2);
+    p(2,21,P.SHD,4); p(10,21,P.SHD,4);
+  } else if(leg==='sit'){
+    p(4,17,P.WHT,2); p(5,18,P.WHT,2); p(6,19,P.WHT,3);
+    p(10,17,P.WHT,2); p(9,18,P.WHT,2); p(7,19,P.WHT,3);
+    p(5,20,P.SHD,4); p(7,20,P.SHD,4);
+  } else if(leg==='sleep'){
+    p(4,17,P.WHT,8); p(4,18,P.WHT,8);
+    p(4,19,P.SHD,4); p(8,19,P.SHD,4);
+  }
+
+  if(flip) cx.restore();
+}
+
+/* ═══════════════════════════════════════════════════════════════
+   POSITIONING
+═══════════════════════════════════════════════════════════════ */
+let cX = window.innerWidth  - cv.width  - 30;
+let cY = window.innerHeight - cv.height - 90;
+let tX = cX, tY = cY;
+
+function applyPos() {
+  cv.style.left = cX + 'px';
+  cv.style.top  = cY + 'px';
+}
+applyPos();
+
+/* ═══════════════════════════════════════════════════════════════
+   ANIMATION STATE MACHINE
+═══════════════════════════════════════════════════════════════ */
+let STATE = 'idle';
+const prevState = { s: 'idle' };
+let animT  = 0;   // ms since state entered
+let lastTS = 0;   // last timestamp
+let bobPh  = 0;
+let blinkT = 0;
+let blinkI = 2800 + Math.random()*3000;
+let blinking = false, blinkW = 0;
+let lookT  = 0, lookI = 6000 + Math.random()*7000;
+let celebT = 0;
+let zzzT   = 0;
+let walkLT = 0, walkLF = 0; // walk leg frame
+let isWalking = false;
+let walkSpeed = 2.2;
+let idleSubT = 0;
+let idleSubMode = 'stand';
+let cursorFollowT = 0;
+let mouseX = cX, mouseY = cY;
+
+// Current draw state
+let DS = {
+  eye:'open', mouth:'smile', bob:0, jump:0,
+  arm:'sides', leg:'stand', blush:.45, flip:false
+};
+
+function lerp(a,b,t){ return a+(b-a)*t; }
+
+/* ── MAIN LOOP ── */
+function loop(ts) {
+  const dt = Math.min(ts - lastTS, 80);
+  lastTS = ts;
+  animT += dt;
+
+  updateWalk(dt);
+  updateState(dt);
+  drawChar(DS);
+  updateBubblePos();
+  requestAnimationFrame(loop);
+}
+requestAnimationFrame(loop);
+
+/* ── UNIVERSAL BLINK ── */
+function tickBlink(dt) {
+  blinkT += dt;
+  if(!blinking && blinkT >= blinkI) {
+    blinking = true; blinkT = 0; blinkW = 0;
+    blinkI = 2200 + Math.random()*3800;
+    DS.eye = 'blink';
+  }
+  if(blinking) {
+    blinkW += dt;
+    if(blinkW > 140) { blinking = false; }
+  }
+}
+
+/* ── STATE UPDATES ── */
+function updateState(dt) {
+  switch(STATE) {
+    case 'idle':     tickIdle(dt);     break;
+    case 'study':    tickStudy(dt);    break;
+    case 'break':    tickBreak(dt);    break;
+    case 'celebrate':tickCelebrate(dt);break;
+    case 'sleep':    tickSleep(dt);    break;
+    case 'curious':  tickCurious(dt);  break;
+  }
+}
+
+function tickIdle(dt) {
+  bobPh += dt * .00115;
+  DS.bob   = Math.round(Math.sin(bobPh * 2) * .55);
+  DS.arm   = 'sides';
+  DS.mouth = 'smile';
+  DS.blush = .45;
+  DS.jump  = 0;
+
+  tickBlink(dt);
+  if(!blinking) DS.eye = 'open';
+
+  // Look around
+  lookT += dt;
+  if(lookT >= lookI) {
+    lookT = 0; lookI = 5000 + Math.random()*7000;
+    DS.flip = Math.random() > .5;
+    setTimeout(() => { if(STATE==='idle') DS.flip = false; }, 1800);
+  }
+
+  // Sub-mode: occasional walk
+  idleSubT += dt;
+  if(idleSubT > 18000 && !isWalking) {
+    idleSubT = 0;
+    randomWalk();
+  }
+
+  // Walking leg animation
+  if(isWalking) {
+    walkLT += dt;
+    if(walkLT > 260) { walkLT = 0; walkLF = 1 - walkLF; }
+    DS.leg = walkLF === 0 ? 'walk1' : 'walk2';
+  } else {
+    DS.leg = 'stand';
+  }
+}
+
+function tickStudy(dt) {
+  bobPh += dt * .0006;
+  DS.bob   = Math.round(Math.sin(bobPh) * .4);
+  DS.arm   = 'read';
+  DS.leg   = 'stand';
+  DS.mouth = 'straight';
+  DS.blush = .3;
+  DS.jump  = 0;
+  DS.flip  = false;
+
+  blinkT += dt;
+  if(!blinking && blinkT >= blinkI * 1.6) {
+    blinking = true; blinkT = 0; blinkW = 0;
+    DS.eye = 'blink';
+  }
+  if(blinking) { blinkW += dt; if(blinkW>110){ blinking=false; DS.eye='focused'; } }
+  else DS.eye = 'focused';
+}
+
+function tickBreak(dt) {
+  bobPh += dt * .0013;
+  DS.bob   = Math.round(Math.sin(bobPh * 1.6) * .7);
+  DS.arm   = 'drink';
+  DS.leg   = 'stand';
+  DS.mouth = 'tiny';
+  DS.blush = .8;
+  DS.jump  = 0;
+
+  tickBlink(dt);
+  if(!blinking) DS.eye = 'happy';
+}
+
+function tickCelebrate(dt) {
+  celebT += dt;
+  const cycle = 560;
+  const t = (celebT % cycle) / cycle;
+  DS.jump  = Math.round(-Math.sin(t * Math.PI) * 3.5);
+  DS.arm   = t < .5 ? 'both_up' : 'clap';
+  DS.eye   = 'excited';
+  DS.mouth = 'big_smile';
+  DS.blush = 1.0;
+  DS.leg   = 'jump';
+  DS.bob   = 0;
+  DS.flip  = false;
+
+  if(celebT % 340 < dt) { spawnFx('star'); spawnFx('heart'); }
+}
+
+function tickSleep(dt) {
+  bobPh += dt * .0004;
+  DS.bob   = Math.round(Math.sin(bobPh) * .5);
+  DS.eye   = 'sleepy';
+  DS.mouth = 'tiny';
+  DS.arm   = 'sleep';
+  DS.leg   = 'sleep';
+  DS.blush = .3;
+  DS.jump  = 0;
+
+  zzzT += dt;
+  if(zzzT > 2200) { zzzT = 0; spawnZzz(); }
+}
+
+function tickCurious(dt) {
+  bobPh += dt * .0018;
+  DS.bob   = Math.round(Math.sin(bobPh * 2.4) * .55);
+  DS.leg   = 'stand';
+  DS.mouth = 'smile';
+  DS.blush = .65;
+  DS.jump  = 0;
+
+  tickBlink(dt);
+  if(!blinking) DS.eye = 'open';
+
+  // Alternate wave frames
+  const wt = (animT % 700) / 700;
+  DS.arm = wt < .5 ? 'wave' : 'wave2';
+
+  // Follow cursor slowly
+  cursorFollowT += dt;
+  if(cursorFollowT > 80) {
+    cursorFollowT = 0;
+    const tx = mouseX - cv.width/2;
+    const ty = mouseY - cv.height/2;
+    cX = lerp(cX, tx, .018);
+    cY = lerp(cY, ty, .018);
+    cX = Math.max(0, Math.min(window.innerWidth  - cv.width,  cX));
+    cY = Math.max(0, Math.min(window.innerHeight - cv.height, cY));
+    applyPos();
+  }
+
+  // Face cursor
+  DS.flip = mouseX < cX + cv.width/2;
+}
+
+/* ═══════════════════════════════════════════════════════════════
+   WALK SYSTEM
+═══════════════════════════════════════════════════════════════ */
+function updateWalk(dt) {
+  if(!isWalking) return;
+  const dx = tX - cX, dy = tY - cY;
+  const dist = Math.sqrt(dx*dx + dy*dy);
+  if(dist < 3) { isWalking = false; cX=tX; cY=tY; applyPos(); return; }
+  const spd = Math.min(walkSpeed * dt * .06, dist);
+  cX += (dx/dist) * spd;
+  cY += (dy/dist) * spd;
+  DS.flip = dx < 0;
+  applyPos();
+}
+
+function walkTo(x, y) {
+  tX = Math.max(0, Math.min(window.innerWidth  - cv.width,  x));
+  tY = Math.max(0, Math.min(window.innerHeight - cv.height, y));
+  isWalking = true;
+}
+
+function randomWalk() {
+  const mx = window.innerWidth  - cv.width;
+  const my = window.innerHeight - cv.height;
+  walkTo(60 + Math.random()*(mx-120), my*.35 + Math.random()*(my*.55));
+}
+
+/* ═══════════════════════════════════════════════════════════════
+   SPEECH BUBBLE
+═══════════════════════════════════════════════════════════════ */
+const bub = document.getElementById('bubble');
+let bubTO = null;
+let lastMsg = '';
+
+const MSGS = {
+  idle:      ['(ᵕ—ᴗ—)', '~✨~', '*yawns softly*', 'hi there! 🌸', '...', '(ᴗ ᴗ)'],
+  study:     ['Let\'s focus! 📚', 'You\'re doing great ✨', 'Keep going! 💕', 'One step at a time 📖', 'I\'m studying too~ 🌸'],
+  break:     ['Rest time! 🌸', 'Snack break~ ☕', 'Good work today!', 'You deserve a break! 💕'],
+  celebrate: ['You did it!! 🎉', 'Amazing work! ⭐', 'Yay!! 💕✨', 'Incredible!!! 🌟', 'So proud of you!! 🥺✨'],
+  sleep:     ['zzz... 💤', 'sleeping... 😴', '...💤...', '*snore*'],
+  curious:   ['Hey, let\'s focus again ✨', 'You were doing great 🌸', 'Let\'s continue studying 💕', 'I\'m here when you\'re ready~ 🌸', 'Come back! 👀'],
+  click:     ['hehe~ 🌸', 'hi! 👋', '(ᴗ ᴗ)ﾉ', 'eek! 🌸', '✨ hi!', 'teehee~'],
+};
+
+function showBubble(text, dur=3200) {
+  lastMsg = text;
+  bub.textContent = text;
+  updateBubblePos();
+  bub.classList.add('show');
+  if(bubTO) clearTimeout(bubTO);
+  bubTO = setTimeout(() => bub.classList.remove('show'), dur);
+}
+
+function updateBubblePos() {
+  const bx = cX + cv.width/2 - 95;
+  const by = cY - 64;
+  bub.style.left = Math.max(8, Math.min(window.innerWidth-210, bx)) + 'px';
+  bub.style.top  = Math.max(8, by) + 'px';
+}
+
+function randomMsg(s) {
+  const pool = MSGS[s] || MSGS.idle;
+  const m = pool[Math.floor(Math.random()*pool.length)];
+  showBubble(m);
+}
+
+/* ═══════════════════════════════════════════════════════════════
+   PARTICLE EFFECTS
+═══════════════════════════════════════════════════════════════ */
+function spawnFx(type) {
+  const sets = {
+    heart:  ['💕','💗','🌸','💖','💝'],
+    star:   ['⭐','✨','🌟','💫','🎊'],
+    sparkle:['✨','🌸','💫'],
+  };
+  const pool = sets[type]||sets.sparkle;
+  const el = document.createElement('div');
+  el.className = 'float-emoji';
+  el.textContent = pool[Math.floor(Math.random()*pool.length)];
+  el.style.fontSize = (14+Math.random()*10)+'px';
+  el.style.left = (cX + Math.random()*cv.width)+'px';
+  el.style.top  = (cY + Math.random()*(cv.height*.5))+'px';
+  el.style.animationDuration = (1.1+Math.random()*.8)+'s';
+  document.body.appendChild(el);
+  setTimeout(()=>el.remove(), 2200);
+}
+
+function spawnZzz() {
+  const el = document.createElement('div');
+  el.className = 'float-zzz';
+  el.textContent = ['z','Z','z','zzz'][Math.floor(Math.random()*4)];
+  el.style.left = (cX + cv.width*.6 + Math.random()*14)+'px';
+  el.style.top  = (cY + 10)+'px';
+  document.body.appendChild(el);
+  setTimeout(()=>el.remove(), 2600);
+}
+
+/* ═══════════════════════════════════════════════════════════════
+   INTERACTION
+═══════════════════════════════════════════════════════════════ */
+let isDrag=false, dox=0, doy=0, dragMoved=false;
+
+cv.addEventListener('mousedown', e => {
+  isDrag=true; dragMoved=false;
+  dox=e.clientX-cX; doy=e.clientY-cY;
+  cv.style.cursor='grabbing';
+  e.preventDefault();
+});
+document.addEventListener('mousemove', e => {
+  mouseX=e.clientX; mouseY=e.clientY;
+  if(!isDrag) return;
+  const nx=e.clientX-dox, ny=e.clientY-doy;
+  const moved=Math.abs(nx-cX)+Math.abs(ny-cY);
+  if(moved>4) dragMoved=true;
+  cX=Math.max(0,Math.min(window.innerWidth -cv.width, nx));
+  cY=Math.max(0,Math.min(window.innerHeight-cv.height,ny));
+  tX=cX; tY=cY;
+  applyPos();
+});
+document.addEventListener('mouseup', e => {
+  if(isDrag) {
+    isDrag=false;
+    cv.style.cursor='grab';
+    if(!dragMoved) onCharClick();
+  }
+});
+
+// Touch support
+cv.addEventListener('touchstart', e => {
+  const t=e.touches[0];
+  isDrag=true; dragMoved=false;
+  dox=t.clientX-cX; doy=t.clientY-cY;
+  e.preventDefault();
+},{passive:false});
+document.addEventListener('touchmove', e => {
+  const t=e.touches[0];
+  mouseX=t.clientX; mouseY=t.clientY;
+  if(!isDrag) return;
+  const nx=t.clientX-dox, ny=t.clientY-doy;
+  if(Math.abs(nx-cX)+Math.abs(ny-cY)>6) dragMoved=true;
+  cX=Math.max(0,Math.min(window.innerWidth -cv.width, nx));
+  cY=Math.max(0,Math.min(window.innerHeight-cv.height,ny));
+  tX=cX; tY=cY; applyPos();
+},{passive:false});
+document.addEventListener('touchend', e => {
+  if(isDrag){ isDrag=false; if(!dragMoved) onCharClick(); }
+});
+
+function onCharClick() {
+  // Quick happy flash
+  const prev=DS.eye;
+  DS.eye='excited'; DS.mouth='big_smile'; DS.blush=1.0;
+  randomMsg('click');
+  for(let i=0;i<3;i++) setTimeout(()=>spawnFx('heart'), i*180);
+  setTimeout(()=>{
+    if(STATE==='idle'){ DS.eye='open'; DS.mouth='smile'; DS.blush=.45; }
+  }, 1600);
+}
+
+/* ═══════════════════════════════════════════════════════════════
+   STATE API
+═══════════════════════════════════════════════════════════════ */
+const STATE_META = {
+  idle:      {icon:'🌸', label:'idle'},
+  study:     {icon:'📚', label:'studying'},
+  break:     {icon:'☕', label:'on break'},
+  celebrate: {icon:'🎉', label:'celebrating!'},
+  sleep:     {icon:'💤', label:'sleeping'},
+  curious:   {icon:'👀', label:'curious'},
+};
+
+function setState(s) {
+  STATE = s;
+  animT = 0; celebT = 0; idleSubT = 0; bobPh = 0;
+  blinking = false; isWalking = false;
+  const m = STATE_META[s];
+  document.getElementById('stateBadge').textContent = m.icon+' '+m.label;
+
+  // Update control buttons
+  document.querySelectorAll('.cb').forEach(b => b.classList.remove('active-state'));
+  const btn = document.getElementById('cb-'+s);
+  if(btn) btn.classList.add('active-state');
+
+  // Trigger message
+  setTimeout(() => randomMsg(s), 300);
+
+  // Spawn effects for celebrate
+  if(s==='celebrate') for(let i=0;i<6;i++) setTimeout(()=>{spawnFx('star');spawnFx('heart');},i*200);
+}
+
+/* ═══════════════════════════════════════════════════════════════
+   INACTIVITY DETECTION
+═══════════════════════════════════════════════════════════════ */
+let lastActive = Date.now();
+let inactiveHintShown = false;
+
+function resetActivity() {
+  lastActive = Date.now();
+  if(inactiveHintShown) {
+    document.getElementById('inactivityHint').classList.remove('show');
+    inactiveHintShown = false;
+  }
+}
+
+document.addEventListener('mousemove',  resetActivity);
+document.addEventListener('keydown',    resetActivity);
+document.addEventListener('click',      resetActivity);
+document.addEventListener('touchstart', resetActivity);
+
+setInterval(() => {
+  const idle = (Date.now() - lastActive) / 1000;
+  if(STATE !== 'sleep' && STATE !== 'celebrate') {
+    if(idle > 45 && STATE !== 'curious') {
+      setState('curious');
+      setTimeout(() => randomMsg('curious'), 400);
+    }
+    if(idle > 90 && !inactiveHintShown) {
+      inactiveHintShown = true;
+      document.getElementById('inactivityHint').classList.add('show');
+      setTimeout(() => document.getElementById('inactivityHint').classList.remove('show'), 5000);
+    }
+  }
+}, 5000);
+
+/* ═══════════════════════════════════════════════════════════════
+   TIMER SYSTEM
+═══════════════════════════════════════════════════════════════ */
+let timerSec = 25*60, timerRunning = false, timerInterval = null;
+let timerMode = 'focus'; // 'focus' | 'break'
+
+function fmtTime(s){ return `${String(Math.floor(s/60)).padStart(2,'0')}:${String(s%60).padStart(2,'0')}`; }
+
+function startFocus() {
+  if(timerRunning) { clearInterval(timerInterval); timerRunning=false; document.getElementById('btnFocus').textContent='▶ Focus'; document.getElementById('timerStatus').textContent='Paused'; return; }
+  timerRunning=true;
+  document.getElementById('btnFocus').textContent='⏸ Pause';
+  document.getElementById('timerStatus').textContent='Focusing... 📚';
+  setState('study');
+  timerInterval = setInterval(() => {
+    timerSec--;
+    document.getElementById('timerDisplay').textContent = fmtTime(timerSec);
+    if(timerSec <= 0) {
+      clearInterval(timerInterval); timerRunning=false;
+      document.getElementById('btnFocus').textContent='▶ Focus';
+      document.getElementById('timerDisplay').textContent='00:00';
+      document.getElementById('timerStatus').textContent='Session complete! 🎉';
+      setState('celebrate');
+      showBubble('Session complete!! 🎉✨', 4000);
+      timerSec = 25*60;
+      setTimeout(()=>document.getElementById('timerDisplay').textContent=fmtTime(timerSec), 4000);
+    }
+  }, 1000);
+}
+
+function triggerBreak() {
+  if(timerRunning){ clearInterval(timerInterval); timerRunning=false; document.getElementById('btnFocus').textContent='▶ Focus'; }
+  timerSec = 5*60;
+  document.getElementById('timerDisplay').textContent = fmtTime(timerSec);
+  document.getElementById('timerStatus').textContent = 'Break time~ ☕';
+  setState('break');
+}
+
+function resetTimer() {
+  if(timerRunning){ clearInterval(timerInterval); timerRunning=false; }
+  timerSec = 25*60;
+  document.getElementById('timerDisplay').textContent = fmtTime(timerSec);
+  document.getElementById('timerStatus').textContent = 'Pomodoro Timer • Ready';
+  document.getElementById('btnFocus').textContent='▶ Focus';
+  setState('idle');
+}
+
+/* ═══════════════════════════════════════════════════════════════
+   TASK SYSTEM
+═══════════════════════════════════════════════════════════════ */
+let tasksDone = 0, tasksTotal = 5;
+
+function toggleTask(el) {
+  el.classList.toggle('done');
+  el.querySelector('.task-cb').textContent = el.classList.contains('done') ? '✓' : '';
+  tasksDone = document.querySelectorAll('.task-item.done').length;
+  document.getElementById('taskCount').textContent = `${tasksDone} / ${tasksTotal}`;
+  document.getElementById('taskBar').style.width = (tasksDone/tasksTotal*100)+'%';
+  if(el.classList.contains('done')) {
+    setState('celebrate');
+    setTimeout(() => setState('idle'), 3500);
+    showBubble('Great job! ✨🌸', 3000);
+  }
+}
+
+/* ═══════════════════════════════════════════════════════════════
+   PERIODIC IDLE MESSAGES
+═══════════════════════════════════════════════════════════════ */
+setInterval(() => {
+  if(STATE==='idle' && Math.random() < .45) randomMsg('idle');
+  if(STATE==='study' && Math.random() < .4) randomMsg('study');
+}, 14000);
+
+// Random walk during idle
+setInterval(() => {
+  if(STATE==='idle' && !isWalking && Math.random() < .35) randomWalk();
+}, 22000);
+
+/* ═══════════════════════════════════════════════════════════════
+   WINDOW RESIZE
+═══════════════════════════════════════════════════════════════ */
+window.addEventListener('resize', () => {
+  cX = Math.max(0, Math.min(window.innerWidth -cv.width, cX));
+  cY = Math.max(0, Math.min(window.innerHeight-cv.height, cY));
+  tX=cX; tY=cY; applyPos();
+});
+
+/* ═══════════════════════════════════════════════════════════════
+   BOOT
+═══════════════════════════════════════════════════════════════ */
+setState('idle');
+setTimeout(() => showBubble('Hi! I\'m your study companion~ 🌸', 4000), 1200);
+setTimeout(() => randomWalk(), 5000);
+</script>
+</body>
+</html>

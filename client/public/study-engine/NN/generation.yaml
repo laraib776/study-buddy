@@ -1,0 +1,75 @@
+# configs/generation.yaml
+# Flan-T5-base + LoRA generation model hyperparameters
+
+model:
+  base_model: "google/flan-t5-base"          # swap to flan-t5-large for better quality
+  load_in_8bit: false                         # set true on 12 GB GPU
+  load_in_4bit: false                         # set true on Colab T4
+
+lora:
+  r: 16                                       # LoRA rank
+  lora_alpha: 32
+  target_modules:
+    - "q"
+    - "v"
+    - "k"
+    - "o"
+    - "wi_0"
+    - "wi_1"
+    - "wo"
+  lora_dropout: 0.05
+  bias: "none"
+  task_type: "SEQ_2_SEQ_LM"
+
+training:
+  output_dir: "outputs/generation"
+  num_train_epochs: 5
+  per_device_train_batch_size: 8
+  per_device_eval_batch_size: 8
+  gradient_accumulation_steps: 4             # effective batch = 32
+  learning_rate: 3.0e-4
+  lr_scheduler_type: "cosine"
+  warmup_ratio: 0.05
+  weight_decay: 0.01
+  fp16: false                                # set true on A100 / RTX
+  bf16: false                                # set true on A100
+  max_grad_norm: 1.0
+  eval_strategy: "epoch"
+  save_strategy: "epoch"
+  load_best_model_at_end: true
+  metric_for_best_model: "eval_loss"
+  greater_is_better: false
+  logging_steps: 50
+  save_total_limit: 3
+  report_to: "none"                          # swap to "wandb" if you want W&B logging
+  seed: 42
+  dataloader_num_workers: 4
+
+data:
+  train_file: "data/processed/train.jsonl"
+  val_file: "data/processed/val.jsonl"
+  max_input_length: 1024                     # document chunk length
+  max_target_length: 512                     # output JSON length
+  task_prefix: true                          # prepend TASK=xxx to input
+
+tasks:
+  - name: "subjective_questions"
+    weight: 1.0
+  - name: "flashcards"
+    weight: 1.0
+  - name: "quiz"
+    weight: 1.0
+
+generation:
+  num_beams: 4
+  max_new_tokens: 512
+  do_sample: false
+  temperature: 1.0
+  repetition_penalty: 1.1
+
+early_stopping:
+  patience: 3                                # stop after 3 epochs no improvement
+
+output:
+  push_to_hub: false
+  hub_model_id: ""                           # fill if you want to push to HuggingFace Hub
