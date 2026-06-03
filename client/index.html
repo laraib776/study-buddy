@@ -197,6 +197,11 @@ input[type=file]{display:none;}
 body.theme-blue .topbar{background:#F8FCFF;}
 .topbar h2{font-family:'Courier New',monospace;font-size:18px;color:#55724E;font-weight:900;flex:1;font-style:normal;text-transform:uppercase;}
 .back-btn{background:var(--lav-lt);border:3px solid #6D5364;width:34px;height:34px;border-radius:0;display:flex;align-items:center;justify-content:center;cursor:pointer;font-size:16px;color:var(--lav2);flex-shrink:0;box-shadow:3px 3px 0 rgba(109,83,100,.16);}
+.study-timer-floating{position:fixed;top:16px;right:18px;z-index:130;display:flex;align-items:center;gap:9px;padding:10px 14px;background:rgba(255,249,242,.94);border:3px solid #6D5364;box-shadow:5px 5px 0 rgba(109,83,100,.18);font-family:'Courier New',monospace;font-weight:900;color:#4B3A46;letter-spacing:0;}
+.study-timer-floating:before{content:"";width:9px;height:9px;background:var(--mint2);box-shadow:0 0 0 4px rgba(56,184,128,.18);animation:timerPulse 1s steps(2,end) infinite;}
+.study-timer-label{font-size:10px;text-transform:uppercase;color:var(--mu);}
+.study-timer-time{font-size:16px;min-width:82px;text-align:right;}
+@keyframes timerPulse{0%,100%{opacity:.38}50%{opacity:1}}
 .desk-title{font-family:'Courier New',monospace;font-size:24px;color:var(--tx);font-weight:900;margin-bottom:6px;}
 .desk-sub{font-size:14px;color:var(--mu);margin-bottom:24px;}
 @media(max-width:768px){
@@ -875,6 +880,7 @@ function normalizeQuiz(q){
   return mcq.length||tf.length||short.length||blanks.length?{mcq,tf,short,blanks}:null;
 }
 function fmt(s){const h=Math.floor(s/3600),m=Math.floor(s%3600/60),sc=s%60;return h>0?`${h}:${String(m).padStart(2,"0")}:${String(sc).padStart(2,"0")}`:`${String(m).padStart(2,"0")}:${String(sc).padStart(2,"0")}`;}
+function fmtClock(s){const h=Math.floor(s/3600),m=Math.floor(s%3600/60),sc=s%60;return `${String(h).padStart(2,"0")}:${String(m).padStart(2,"0")}:${String(sc).padStart(2,"0")}`;}
 function dateKey(date=new Date()){return `${date.getFullYear()}-${String(date.getMonth()+1).padStart(2,'0')}-${String(date.getDate()).padStart(2,'0')}`;}
 function utcDateKey(date=new Date()){return date.toISOString().slice(0,10);}
 function todayKey(){return dateKey();}
@@ -1759,6 +1765,12 @@ function App(){
     if(talk)setTimeout(()=>setGuideState(s=>({...s,talk:false})),3600);
   }
   const goTo=id=>{runGuideActivity(guideAction[id]||'wave',guideLines[id]||guideLines.home,true);if(id==='focus'){setScreen('focus');setFocusOn(true);}else setScreen(id);};
+  const startStudySession=()=>{
+    setBreakType(null);
+    setFocusOn(true);
+    runGuideActivity('study','Study timer started. Keep one clear goal in front of you.',true);
+    showToast('Study timer started');
+  };
 
   // ──────────────────────────────────────────
   //  SCREENS
@@ -1842,7 +1854,8 @@ function App(){
       E('div',{},
         E('div',{style:{fontSize:13,fontWeight:700,color:'#2D1B5A',marginBottom:12}},'Quick Start'),
         E('div',{className:'quick-grid',style:{display:'grid',gridTemplateColumns:'repeat(2,1fr)',gap:10}},
-          [{img:assets.folder,label:'Upload Notes',sub:'PDF, DOCX, PPTX, URL',pal:palette.lav,act:()=>goTo('notes')},
+          [{img:assets.headphones,label:focusOn?'Studying Now':'Start Study',sub:focusOn?fmtClock(focusSec):'Start timer',pal:palette.lav,act:startStudySession},
+           {img:assets.folder,label:'Upload Notes',sub:'PDF, DOCX, PPTX, URL',pal:palette.lav,act:()=>goTo('notes')},
            {img:assets.book,label:'Flashcards',sub:'AI review set',pal:palette.mint,act:()=>{if(cards.length>0){setStudyTab('cards');goTo('study');}else{goTo('notes');showToast('Upload notes first');}}},
            {img:assets.calendar,label:'Quiz',sub:diff+' difficulty',pal:palette.peach,act:()=>{if(quiz){setStudyTab('quiz');goTo('study');}else{goTo('notes');showToast('Upload notes first');}}},
            {img:assets.brain,label:'Subjective Qs',sub:'Speak or type answers',pal:palette.rose,act:()=>{if(viva.length>0){setStudyTab('oral');goTo('study');}else{goTo('notes');showToast('Upload notes first');}}}
@@ -2820,6 +2833,10 @@ function App(){
         screen!=='home'&&E('button',{className:'back-btn',onClick:()=>setScreen('home')},'‹'),
         E('h2',{},screenTitle[screen]||'StudyBuddy'),
         E('button',{onClick:openSettings,style:{background:'none',border:'none',cursor:'pointer',padding:'4px',display:'flex'}},Img({src:assets.settings,alt:'settings',style:{width:34,height:34,imageRendering:'pixelated'}}))
+      ),
+      focusOn&&E('div',{className:'study-timer-floating'},
+        E('span',{className:'study-timer-label'},'Study'),
+        E('span',{className:'study-timer-time'},fmtClock(focusSec))
       ),
       E('div',{className:'screen-wrap',onWheel:()=>{
         const now=Date.now();
