@@ -65,7 +65,7 @@ Open:
 ```txt
 http://127.0.0.1:5500/studybuddy_v3.html
 ```
-<!-- parse error -->
+<!-- parse error why it occurs and  how to fix it -->
 <!-- Why it happened: AI sometimes returns JSON with extra text/Markdown or { cards: [...] } instead of a plain array, so the old parser rejected it.
 
 How fixed: I made the parser extract valid JSON from messy AI replies and made flashcards accept both array and object formats. -->
