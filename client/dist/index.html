@@ -1039,6 +1039,7 @@ function App(){
   const[splashMsg,setSplashMsg]=useState(splashMsgs[0]);
   const[screen,setScreen]=useState('home');
   const[studyTab,setStudyTab]=useState('cards');
+  const[activeStudyView,setActiveStudyView]=useState('');
   const[notes,setNotes]=useState('');
   const[topic,setTopic]=useState(()=>initialData.topic||'');
   const[savedNotes,setSavedNotes]=useState(()=>initialData.savedNotes||[]);
@@ -1618,7 +1619,7 @@ function App(){
       if(p.length){
         appStateVersionRef.current++;
         setCards(p);setCardIdx(0);setFlipped(false);setCardRatings({});
-        setStudyTab('cards');setScreen('study');
+        setStudyTab('cards');setActiveStudyView('cards');setScreen('study');
         updProg({cards:(todayData.cards||0)+p.length,topics:[...new Set([...(todayData.topics||[]),source.topic||'Session'])]});
         showToast('Flashcards ready');
       }else showToast('AI returned no usable flashcards. Try again.','err');
@@ -1636,7 +1637,7 @@ function App(){
         `Generate a ${diff} quiz from:\n\nTOPIC: ${source.topic}\n\nNOTES:\n${source.notes.slice(0,3500)}\n\nReturn ONLY valid JSON:\n{"mcq":[{"q":"?","opts":["A","B","C","D"],"ans":0,"exp":"brief explanation"}],"tf":[{"q":"statement","ans":true,"exp":"explanation"}],"blanks":[{"q":"_____ is the missing term.","ans":"term","exp":"brief explanation"}],"short":[{"q":"?","ans":"model answer"}]}\n\nGenerate: 5 MCQs, 4 T/F, 5 blanks, 4 short answer.`
       ));
       const p=normalizeQuiz(parseJ(r));
-      if(p){appStateVersionRef.current++;setQuiz(p);setAnswers({});setSubmitted(false);setQtab('mcq');setScore(null);setStudyTab('quiz');setScreen('study');showToast('Quiz ready');}
+      if(p){appStateVersionRef.current++;setQuiz(p);setAnswers({});setSubmitted(false);setQtab('mcq');setScore(null);setStudyTab('quiz');setActiveStudyView('quiz');setScreen('study');showToast('Quiz ready');}
       else showToast('AI returned no usable quiz. Try again.','err');
     }catch(e){showToast(e.message,'err');}
     setLoading(false);
@@ -1651,7 +1652,7 @@ function App(){
     setPracticeDone(false);
     setPracticeResults([]);
     setViva([{role:'examiner',text:qs[0]?.q||`Write a short answer about ${source.topic||'this topic'}.`}]);
-    setVivaIn('');setStudyTab('oral');setScreen('study');showToast('Subjective questions ready');
+    setVivaIn('');setStudyTab('oral');setActiveStudyView('oral');setScreen('study');showToast('Subjective questions ready');
     updProg({subjectivePractice:(todayData.subjectivePractice||0)+1,topics:[...new Set([...(todayData.topics||[]),source.topic||'Session'])]});
   };
 
@@ -1913,9 +1914,9 @@ function App(){
         E('div',{style:{fontSize:13,fontWeight:700,color:'#2D1B5A',marginBottom:12}},'Quick Start'),
         E('div',{className:'quick-grid',style:{display:'grid',gridTemplateColumns:'repeat(2,1fr)',gap:10}},
           [{img:assets.folder,label:'Upload Notes',sub:'PDF, DOCX, PPTX, URL',pal:palette.lav,act:()=>goTo('notes')},
-           {img:assets.book,label:'Flashcards',sub:'AI review set',pal:palette.mint,act:()=>{if(cards.length>0){setStudyTab('cards');goTo('study');}else{goTo('notes');showToast('Upload notes first');}}},
-           {img:assets.calendar,label:'Quiz',sub:diff+' difficulty',pal:palette.peach,act:()=>{if(quiz){setStudyTab('quiz');goTo('study');}else{goTo('notes');showToast('Upload notes first');}}},
-           {img:assets.brain,label:'Subjective Qs',sub:'Speak or type answers',pal:palette.rose,act:()=>{if(viva.length>0){setStudyTab('oral');goTo('study');}else{goTo('notes');showToast('Upload notes first');}}}
+           {img:assets.book,label:'Flashcards',sub:'AI review set',pal:palette.mint,act:()=>{if(cards.length>0){setStudyTab('cards');setActiveStudyView('cards');goTo('study');}else{goTo('notes');showToast('Upload notes first');}}},
+           {img:assets.calendar,label:'Quiz',sub:diff+' difficulty',pal:palette.peach,act:()=>{if(quiz){setStudyTab('quiz');setActiveStudyView('quiz');goTo('study');}else{goTo('notes');showToast('Upload notes first');}}},
+           {img:assets.brain,label:'Subjective Qs',sub:'Speak or type answers',pal:palette.rose,act:()=>{if(viva.length>0){setStudyTab('oral');setActiveStudyView('oral');goTo('study');}else{goTo('notes');showToast('Upload notes first');}}}
           ].map((a,i)=>E('button',{key:i,onClick:a.act,style:{background:a.pal.light,border:`1.5px solid ${a.pal.mid}`,borderRadius:16,padding:'16px',cursor:'pointer',display:'flex',alignItems:'center',gap:12,textAlign:'left',transition:'all .2s',width:'100%'},
             onMouseOver:ev=>{ev.currentTarget.style.transform='translateY(-2px)';ev.currentTarget.style.boxShadow=`0 6px 20px ${a.pal.mid}50`;},
             onMouseOut:ev=>{ev.currentTarget.style.transform='';ev.currentTarget.style.boxShadow=''}},
@@ -2167,6 +2168,22 @@ function App(){
       )
     );
 
+    if(activeStudyView){
+      const label=activeStudyView==='oral'?'Subjective':activeStudyView.charAt(0).toUpperCase()+activeStudyView.slice(1);
+      return E('div',{className:'fade-up',ref:studyScrollRef,onScroll:ev=>{if(!studyScrollLockRef.current)studyScrollTopRef.current=ev.currentTarget.scrollTop;}},
+        E('div',{className:'page-header',style:{display:'flex',alignItems:'center',justifyContent:'space-between',gap:12}},
+          E('div',{},
+            E('h1',{},label),
+            E('p',{},'Focused study mode')
+          ),
+          E('button',{className:'btn btn-outline btn-sm',onClick:()=>setActiveStudyView('')},'Back')
+        ),
+        activeStudyView==='cards'&&CardsView(),
+        activeStudyView==='quiz'&&QuizView(),
+        activeStudyView==='oral'&&OralView()
+      );
+    }
+
     return E('div',{className:'fade-up',ref:studyScrollRef,onScroll:ev=>{if(!studyScrollLockRef.current)studyScrollTopRef.current=ev.currentTarget.scrollTop;}},
       E('div',{className:'page-header'},E('h1',{},'Study Mode'),E('p',{},'Flashcards, Quiz & Subjective Questions')),
       E('div',{className:'card-sm',style:{marginBottom:14,borderColor:'var(--pk2)',background:'linear-gradient(135deg,var(--pk-lt),var(--lav-lt))'}},
@@ -2203,15 +2220,7 @@ function App(){
             E('button',{className:'btn btn-rose btn-sm',onClick:()=>startOral(),style:{justifyContent:'center'}},'Start Subjective')
           )
         ):E('div',{style:{padding:'18px',textAlign:'center',fontSize:12,fontWeight:900,color:'var(--mu)'}},'No saved documents yet. Go to Notes, enter a topic, and upload or save notes.')
-      ),
-      E('div',{style:{display:'flex',gap:8,marginBottom:20}},
-        [['cards','Cards'],['quiz','Quiz'],['oral','Subjective']].map(([tab,lbl])=>
-          E('button',{key:tab,onClick:()=>setStudyTab(tab),style:{padding:'10px 20px',borderRadius:50,border:`1.5px solid ${studyTab===tab?palette.lav.dark:palette.lav.mid}`,cursor:'pointer',fontSize:13,fontWeight:700,background:studyTab===tab?palette.lav.dark:'white',color:studyTab===tab?'white':'#9B8EBF',transition:'all .2s',whiteSpace:'nowrap'}},lbl)
-        )
-      ),
-      studyTab==='cards'&&CardsView(),
-      studyTab==='quiz'&&QuizView(),
-      studyTab==='oral'&&OralView()
+      )
     );
   };
 
