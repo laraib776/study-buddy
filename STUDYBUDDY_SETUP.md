@@ -27,7 +27,7 @@ import { getAnalytics } from "firebase/analytics";
 // Your web app's Firebase configuration
 // For Firebase JS SDK v7.20.0 and later, measurementId is optional
 const firebaseConfig = {
-  apiKey: "AIzaSyBEatMy9zAA-12cFf1EutrJrIVpxpYVmA8",
+  apiKey: "YOUR_FIREBASE_API_KEY",
   authDomain: "studybuddy-89f9b.firebaseapp.com",
   projectId: "studybuddy-89f9b",
   storageBucket: "studybuddy-89f9b.firebasestorage.app",
@@ -51,10 +51,10 @@ When you're ready, deploy your web app
 Put your static files (e.g. HTML, CSS, JS) in your app's deploy directory (the default is 'public'). Then, run this command from your app's root directory:
 
 firebase deploy
-<!-- main login : laraibkhalid@gmail.com and passw: lbk@123 -->
+<!-- Use your own Firebase test account locally. Do not commit real login credentials. -->
 
 
-<!-- for ai the api is  this AIzaSyAKLgZyjG1bB7F_gqePXMJzahfmDc8uUEs -->
+<!-- Add your AI API key locally. Do not commit real API keys to git. -->
 
 ```js
 const firebaseConfig = {
@@ -291,4 +291,3 @@ Works without Firebase config:
 - The page loads
 - UI can be viewed
 - Login will block real entry because Firebase is required
-

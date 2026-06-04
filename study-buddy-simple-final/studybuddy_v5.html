@@ -617,7 +617,7 @@ function FirebaseSetupScreen({onDone}){
         ),
         err&&E('div',{className:'auth-err'},err),
         E('form',{onSubmit:handleSubmit},
-          [['apiKey','API Key','AIza...'],['authDomain','Auth Domain','project.firebaseapp.com'],
+          [['apiKey','API Key','YOUR_FIREBASE_API_KEY'],['authDomain','Auth Domain','project.firebaseapp.com'],
            ['projectId','Project ID','my-project'],['appId','App ID','1:123:web:abc']].map(([k,l,ph])=>
             E('div',{key:k,className:'auth-field'},
               E('label',{className:'auth-label'},l+' *'),
