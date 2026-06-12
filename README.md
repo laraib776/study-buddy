@@ -23,3 +23,16 @@ A simple and interactive **Study Buddy Application** designed to help students o
 
 ---
 
+📁 Project Structure
+study-buddy-app/
+│
+├── public/
+├── src/
+│   ├── components/
+│   ├── pages/
+│   ├── assets/
+│   ├── App.js
+│   └── index.js
+│
+├── package.json
+└── README.md
