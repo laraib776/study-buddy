@@ -5,3 +5,11 @@ A simple and interactive **Study Buddy Application** designed to help students o
 ---
 
 ## 🚀 Features
+## 🚀 Features
+
+- 🗓️ Create and manage study schedules  
+- ⏱️ Pomodoro-style focus sessions  
+- 📊 Track daily/weekly study progress  
+- 🎯 Set personal study goals  
+- 🔔 Reminders for study sessions  
+- 🧠 Lightweight and distraction-free interface  
