@@ -36,3 +36,22 @@ study-buddy-app/
 │
 ├── package.json
 └── README.md
+
+## ⚙️ Installation
+
+Clone the repository:
+
+```bash
+git clone https://github.com/your-username/study-buddy-app.git
+
+Navigate to the project folder:
+
+cd study-buddy-app
+
+Install dependencies:
+
+npm install
+
+Run the application:
+
+npm start
