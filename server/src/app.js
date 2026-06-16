@@ -8,6 +8,11 @@ import errorHandler from './middleware/errorHandler.js';
 
 const app = express();
 
+
+import morgan from 'morgan';
+import rateLimit from 'express-rate-limit';
+import apiRoutes from './routes/apiRoutes.js';
+import errorHandler from './middleware/errorHandler.js';
 app.use(helmet());
 app.use(cors({ origin: true }));
 app.use(express.json({ limit: '128kb' }));
