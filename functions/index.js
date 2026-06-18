@@ -7,11 +7,6 @@ const { HttpsError, onCall } = require("firebase-functions/v2/https");
 const admin = require("firebase-admin");
 
 admin.initializeApp();
-const { genkit, z } = require("genkit");
-const { googleAI } = require("@genkit-ai/google-genai");
-const { defineSecret } = require("firebase-functions/params");
-const { HttpsError, onCall } = require("firebase-functions/v2/https");
-const admin = require("firebase-admin");
 
 const geminiApiKey = defineSecret("GEMINI_API_KEY");
 
