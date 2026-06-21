@@ -40,7 +40,16 @@ def merge_lora(lora_path: str, base_model: str, output_dir: str):
         torch_dtype=torch.bfloat16,
         trust_remote_code=True,
     )
-
+# def merge_lora(lora_path: str, base_model: str, output_dir: str):
+#     """Load base model + LoRA adapter, merge weights, save merged model."""
+#     print(f"Loading base model: {base_model}")
+#     base = AutoModelForCausalLM.from_pretrained(
+#         base_model,
+#         device_map="cpu",          # CPU merge to avoid VRAM limits
+#         torch_dtype=torch.bfloat16,
+#         trust_remote_code=True,
+#     )
+    
     print(f"Loading LoRA adapter from: {lora_path}")
     peft_model = PeftModel.from_pretrained(base, lora_path)
 
