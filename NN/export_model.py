@@ -68,6 +68,15 @@ def merge_lora(lora_path: str, base_model: str, output_dir: str):
     return output_dir
 
 
+# def quantize_gguf(merged_dir: str, output_dir: str, bits: int = 4):
+#     """
+#     Convert merged HF model to GGUF format using llama.cpp convert scripts.
+
+#     Requirements:
+#         git clone https://github.com/ggerganov/llama.cpp
+#         cd llama.cpp && pip install -r requirements.txt
+#         make -j  (to build quantize binary)
+#     """
 def quantize_gguf(merged_dir: str, output_dir: str, bits: int = 4):
     """
     Convert merged HF model to GGUF format using llama.cpp convert scripts.
