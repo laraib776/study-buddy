@@ -44,6 +44,11 @@ BASE_MODEL = os.environ.get("BASE_MODEL", "microsoft/Phi-3-mini-4k-instruct")
 MAX_INPUT_CHARS = int(os.environ.get("MAX_INPUT_CHARS", "8000"))
 RATE_LIMIT = int(os.environ.get("RATE_LIMIT", "30"))
 
+# MODEL_PATH = os.environ.get("MODEL_PATH", "exported/study-engine-phi3/merged")
+# BASE_MODEL = os.environ.get("BASE_MODEL", "microsoft/Phi-3-mini-4k-instruct")
+# MAX_INPUT_CHARS = int(os.environ.get("MAX_INPUT_CHARS", "8000"))
+# RATE_LIMIT = int(os.environ.get("RATE_LIMIT", "30"))
+
 # ─────────────────────────────────────────────────────────────────────────────
 # System prompt
 # ─────────────────────────────────────────────────────────────────────────────
