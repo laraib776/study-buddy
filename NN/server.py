@@ -161,7 +161,9 @@ def sanitize_input(text: str) -> str:
 # ─────────────────────────────────────────────────────────────────────────────
 # Inference
 # ─────────────────────────────────────────────────────────────────────────────
-
+# def infer(prompt: str, max_new_tokens: int = 600) -> str:
+#     model = model_state["model"]
+#     tokenizer = model_state["tokenizer"]
 def infer(prompt: str, max_new_tokens: int = 600) -> str:
     model = model_state["model"]
     tokenizer = model_state["tokenizer"]
