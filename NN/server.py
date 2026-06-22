@@ -88,6 +88,11 @@ def check_rate_limit(ip: str) -> bool:
 # Prompt builders
 # ─────────────────────────────────────────────────────────────────────────────
 
+# def build_prompt(task: str, notes: str, topic: str, count: int,
+#                   difficulty: str = "medium", student: str = "",
+#                   expected: str = "", question: str = "",
+#                   rubric: Optional[dict] = None) -> str:
+
 def build_prompt(task: str, notes: str, topic: str, count: int,
                   difficulty: str = "medium", student: str = "",
                   expected: str = "", question: str = "",
