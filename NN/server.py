@@ -258,7 +258,7 @@ async def lifespan(app: FastAPI):
     yield
     logger.info("Shutting down study engine.")
 
-
+# app = FastAPI(title="StudyBuddy Neural Study Engine", lifespan=lifespan)
 app = FastAPI(title="StudyBuddy Neural Study Engine", lifespan=lifespan)
 
 app.add_middleware(
