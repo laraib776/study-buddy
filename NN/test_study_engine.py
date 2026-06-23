@@ -150,6 +150,19 @@ def validate_evaluation(data: Any):
 # Unit tests — JSON format validation (no model needed)
 # ─────────────────────────────────────────────────────────────────────────────
 
+# class TestJsonSchemas:
+
+#     def test_valid_questions_schema(self):
+#         sample = [
+#             {
+#                 "q": "Explain overfitting in your own words.",
+#                 "ans": "Overfitting is when a model memorizes training data.",
+#                 "rubric": {"keyPoints": ["memorization", "poor generalization"],
+#                            "mustMention": [], "niceToHave": []},
+#                 "difficulty": "medium",
+#                 "sourceSpan": "Overfitting occurs..."
+#             }
+#         ]
 class TestJsonSchemas:
 
     def test_valid_questions_schema(self):
