@@ -86,6 +86,17 @@ def validate_questions(data: Any):
         # Rubric structure
         assert isinstance(item["rubric"].get("keyPoints", []), list)
 
+# def validate_flashcards(data: Any):
+#     assert isinstance(data, list), "makeFlashcards must return a list"
+#     assert len(data) > 0, "Flashcards list must not be empty"
+#     for card in data:
+#         assert "front" in card and card["front"].strip(), "Flashcard must have non-empty 'front'"
+#         assert "back" in card and card["back"].strip(), "Flashcard must have non-empty 'back'"
+#         assert "tag" in card, "Flashcard must have 'tag'"
+#         assert "difficulty" in card, "Flashcard must have 'difficulty'"
+#         # front should be a question
+#         assert len(card["front"]) < 300, "Flashcard front must be concise"
+#         assert len(card["back"]) < 500, "Flashcard back must be concise
 
 def validate_flashcards(data: Any):
     assert isinstance(data, list), "makeFlashcards must return a list"
