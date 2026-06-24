@@ -17,6 +17,11 @@ const studyBuddyInputSchema = z.object({
   system: z.string().max(3000).optional(),
   tools: z.any().optional().nullable()
 });
+const studyBuddyInputSchema = z.object({
+  prompt: z.string().min(1).max(240),
+  system: z.string().max(3000).optional(),
+  tools: z.any().optional().nullable()
+});
 
 const studyBuddyFlow = ai.defineFlow(
   {
