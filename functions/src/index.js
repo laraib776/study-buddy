@@ -17,11 +17,11 @@ const studyBuddyInputSchema = z.object({
   system: z.string().max(3000).optional(),
   tools: z.any().optional().nullable()
 });
-const studyBuddyInputSchema = z.object({
-  prompt: z.string().min(1).max(240),
-  system: z.string().max(3000).optional(),
-  tools: z.any().optional().nullable()
-});
+// const studyBuddyInputSchema = z.object({
+//   prompt: z.string().min(1).max(240),
+//   system: z.string().max(3000).optional(),
+//   tools: z.any().optional().nullable()
+// });
 
 const studyBuddyFlow = ai.defineFlow(
   {
@@ -42,6 +42,14 @@ const studyBuddyFlow = ai.defineFlow(
         temperature: 0.35,
         maxOutputTokens: 1800
       }
+      //  const response = await ai.generate({
+      // model: googleAI.model(process.env.GEMINI_MODEL || 'gemini-2.5-flash'),
+      // system: finalSystem,
+      // prompt,
+      // config: {
+      //   temperature: 0.35,
+      //   maxOutputTokens: 1800
+      // }
     });
 
     return { text: response.text || '' };
