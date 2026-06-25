@@ -2,6 +2,7 @@
 # RoBERTa-base regression head for answer evaluation scoring
 
 model:
+  # base_model: "roberta-base"
   base_model: "roberta-base"
   hidden_dropout_prob: 0.1
   num_labels: 1                              # regression output (0-100 pct score)
