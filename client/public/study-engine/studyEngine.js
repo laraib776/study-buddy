@@ -73,7 +73,7 @@
       score: item.score
     }));
   };
-
+// const makeFlashcards = ({ notes, topic = '', count = 12 }) => {
   const makeFlashcards = ({ notes, topic = '', count = 12 }) => {
     const evidence = rankedEvidence(notes, topic).slice(0, count);
     return evidence.map((item, index) => {
