@@ -6,13 +6,12 @@
   ]);
 
   const normalize = (value) => String(value || '').replace(/\s+/g, ' ').trim();
+   // const normalize = (value) => String(value || '').replace(/\s+/g, ' ').trim();
   const words = (value) => (normalize(value).toLowerCase().match(/[a-z0-9][a-z0-9-]{2,}/g) || [])
     .filter((word) => !STOP.has(word));
   const unique = (items) => [...new Set(items.filter(Boolean))];
   // const splitSentences = (text) => normalize(text)
-  //   .split(/(?=\b\d+\)\s+)|(?<=[.!?])\s+/)
-  //   .map((item) => normalize(item))
-  //   .filter((item) => item.length > 35);
+
   const splitSentences = (text) => normalize(text)
     .split(/(?=\b\d+\)\s+)|(?<=[.!?])\s+/)
     .map((item) => normalize(item))
