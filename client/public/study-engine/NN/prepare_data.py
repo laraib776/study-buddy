@@ -50,6 +50,8 @@ def gen_example(task: str, document: str, topic: str, output: Any, source: str) 
     }
 
 # Evaluator example
+# # Evaluator example
+# def eval_example(
 def eval_example(
     question: str,
     reference_answer: str,
