@@ -70,7 +70,7 @@ model_state = {"model": None, "tokenizer": None, "ready": False}
 # ─────────────────────────────────────────────────────────────────────────────
 
 rate_store: dict = {}
-
+# def check_rate_limit(ip: str) -> bool:
 def check_rate_limit(ip: str) -> bool:
     now = time.time()
     window_start = now - 60
