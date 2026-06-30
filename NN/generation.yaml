@@ -24,6 +24,9 @@ lora_target_modules:
 # ── Quantization ──────────────────────────────────────────────────────────────
 use_4bit: true
 bnb_4bit_compute_dtype: "bfloat16"
+# use_4bit: true
+# bnb_4bit_compute_dtype: "bfloat16"
+
 
 # ── Data ──────────────────────────────────────────────────────────────────────
 data_path: "data/processed/train.jsonl"
