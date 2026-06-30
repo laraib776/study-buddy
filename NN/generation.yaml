@@ -36,6 +36,7 @@ packing: false
 
 # ── Training ──────────────────────────────────────────────────────────────────
 output_dir: "checkpoints/generation"
+# output_dir: "checkpoints/generation"
 num_train_epochs: 3
 per_device_train_batch_size: 4
 per_device_eval_batch_size: 4
